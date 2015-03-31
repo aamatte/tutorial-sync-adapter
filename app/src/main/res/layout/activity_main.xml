@@ -4,6 +4,9 @@
     android:id="@+id/layout"
     tools:context=".MainActivity"
     >
-
+    <fragment class="com.example.andres.myapplication.ListFragment"
+        android:id="@+id/list_frag"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"/>
 
 </FrameLayout>

@@ -30,7 +30,13 @@ public class StudentFragment extends Fragment {
         // Inflate the layout for this fragment
         View v = inflater.inflate(R.layout.fragment_student, container, false);
         Bundle args = getArguments();
-        String name = args.getString(MainActivity.CODE_NAME);
+        String name;
+        if (args != null){
+            name = args.getString(MainActivity.CODE_NAME);
+        }
+        else{
+            name = "Selecciona un alumno";
+        }
 
         TextView textViewName = (TextView) v.findViewById(R.id.texto);
         textViewName.setText(name);

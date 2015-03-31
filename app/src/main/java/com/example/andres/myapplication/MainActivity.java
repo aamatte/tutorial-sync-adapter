@@ -1,12 +1,11 @@
 package com.example.andres.myapplication;
 
 import android.app.DialogFragment;
+import android.support.v7.app.ActionBarActivity;
 import android.content.Intent;
 import android.os.Bundle;
-import android.support.v7.app.ActionBarActivity;
 import android.view.Menu;
 import android.view.MenuItem;
-
 
 public class MainActivity extends ActionBarActivity implements ListFragment.OnFragmentInteractionListener, StudentFragment.OnFragmentInteractionListener, AgregarAlumnoDialogFragment.NoticeDialogListener {
 
@@ -18,12 +17,11 @@ public class MainActivity extends ActionBarActivity implements ListFragment.OnFr
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        if (savedInstanceState == null) {
-            getSupportFragmentManager().beginTransaction()
-                    .add(R.id.layout, new ListFragment())
-                    .commit();
-        }
-
+      //  if (savedInstanceState == null) {
+       //     getSupportFragmentManager().beginTransaction()
+         //           .add(R.id.list_frag, new ListFragment())
+           //         .commit();
+       // }
 
     }
 
