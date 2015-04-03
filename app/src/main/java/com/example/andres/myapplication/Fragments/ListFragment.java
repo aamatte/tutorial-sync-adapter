@@ -1,6 +1,9 @@
-package com.example.andres.myapplication;
+package com.example.andres.myapplication.Fragments;
 
 import android.app.Activity;
+import android.content.ContentValues;
+import android.database.Cursor;
+import android.database.sqlite.SQLiteDatabase;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
@@ -9,6 +12,11 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.ListView;
+
+import com.example.andres.myapplication.Model.Item;
+import com.example.andres.myapplication.MyAdapter;
+import com.example.andres.myapplication.Persistence.DatabaseContract;
+import com.example.andres.myapplication.R;
 
 import java.io.BufferedReader;
 import java.io.InputStream;
@@ -23,23 +31,32 @@ public class ListFragment extends Fragment {
 
     private OnFragmentInteractionListener mListener;
     private final String linkDescargaArchivo = "https://drive.google.com/uc?export=download&id=0B8yZfi78R0lEd2NRb2dRZGtPM2M";
-    private Item[] indexedItemArray = new Item[0];
+    private ArrayList<Item> indexedItemArray = new ArrayList<Item>();
     private String[] nombres;
-    private MiAdaptador adaptador;
+    private MyAdapter adaptador;
     private ListView listView;
+    DatabaseContract.Students.StudentsDbHelper mDbHelper;
+
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-        // Inflate the layout for this fragment
-        View v = inflater.inflate(R.layout.fragment_list, container, false);
 
+        View v = inflater.inflate(R.layout.fragment_list, container, false);
+        adaptador = new MyAdapter(v.getContext() , R.layout.list_item , indexedItemArray);
+
+        if (savedInstanceState != null){
+            nombres = savedInstanceState.getStringArray("alumnos");
+            generateIndexedItemArray();
+        }
+        else if (!selectStudentsFromDb()){
+            DownloadFileTask downloadFileTask = new DownloadFileTask();
+            downloadFileTask.execute(linkDescargaArchivo);
+        }
+        // Inflate the layout for this fragment
         listView = (ListView) v.findViewById(R.id.list_students);
 
-        DownloadFileTask downloadFileTask = new DownloadFileTask();
-        downloadFileTask.execute(linkDescargaArchivo);
 
-        adaptador = new MiAdaptador(v.getContext() , R.layout.list_item , indexedItemArray);
         listView.setAdapter(adaptador);
         listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
@@ -56,8 +73,21 @@ public class ListFragment extends Fragment {
 
     }
 
-    public void agregarAlumno(String name){
+    @Override
+    public void onSaveInstanceState(Bundle savedState) {
+
+        // Note: getValues() is a method in your ArrayAdaptor subclass
+        savedState.putStringArray("alumnos", nombres);
+        super.onSaveInstanceState(savedState);
+
+    }
+
+    public void addStudent(String name){
         addItemToIndexedArray(name);
+        String[] n = name.split(" ");
+        if (n.length == 3) addStudentToDb(n[1], n[2], n[0]);
+        if (n.length == 4) addStudentToDb(n[2]+ " " + n[3], n[0], n[1]);
+        else addStudentToDb(n[1], n[0], "");
     }
 
     private void addItemToIndexedArray(String nombre){
@@ -71,17 +101,78 @@ public class ListFragment extends Fragment {
         newArray[nombres.length] = nombre;
         Arrays.sort(newArray);
         nombres = newArray;
-        indexedItemArray = generateIndexedItemArray();
-        adaptador = new MiAdaptador(getActivity(),  R.layout.list_item , indexedItemArray);
-        listView.setAdapter(adaptador);
+        generateIndexedItemArray();
     }
 
-    private Item[] generateIndexedItemArray(){
+    private void addStudentToDb(String name, String firstLastname, String secondLastname){
+
+        if (mDbHelper == null) {
+            mDbHelper = new DatabaseContract.Students.StudentsDbHelper(getActivity());
+        }
+
+
+        SQLiteDatabase db = mDbHelper.getWritableDatabase();
+
+
+        ContentValues values = new ContentValues();
+        values.put(DatabaseContract.Students.COLUMN_NAME_STUDENT_NAMES, name);
+        values.put(DatabaseContract.Students.COLUMN_NAME_FIRST_LASTNAME, firstLastname);
+        values.put(DatabaseContract.Students.COLUMN_NAME_SECOND_LASTNAME, secondLastname);
+
+        long newRowId;
+        newRowId = db.insert(
+                DatabaseContract.Students.TABLE_NAME,
+                null,
+                values);
+
+
+    }
+
+    private boolean selectStudentsFromDb(){
+
+        if (mDbHelper == null) {
+            mDbHelper = new DatabaseContract.Students.StudentsDbHelper(getActivity());
+        }
+
+
+
+        SQLiteDatabase db = mDbHelper.getReadableDatabase();
+
+        Cursor c = db.rawQuery("SELECT * FROM STUDENTS ORDER BY "+ DatabaseContract.Students.COLUMN_NAME_FIRST_LASTNAME +" ASC", null);
+        ArrayList<String> students = new ArrayList<String>();
+
+        c.moveToFirst();
+
+        if (c.getCount()<1){
+            return false;
+        }
+
+        while (c.moveToNext()){
+            String names = c.getString(c.getColumnIndexOrThrow(DatabaseContract.Students.COLUMN_NAME_STUDENT_NAMES));
+            String firstLast = c.getString(c.getColumnIndexOrThrow(DatabaseContract.Students.COLUMN_NAME_FIRST_LASTNAME));
+            String secondLast = c.getString(c.getColumnIndexOrThrow(DatabaseContract.Students.COLUMN_NAME_SECOND_LASTNAME));
+            students.add(firstLast + " " + secondLast + " " + names);
+        }
+
+        if (students.size()>0){
+            nombres = students.toArray(new String[students.size()]);
+            generateIndexedItemArray();
+            return true;
+        }
+
+        return false;
+
+
+    }
+
+
+    private void generateIndexedItemArray(){
 
         ArrayList<Item> items = new ArrayList<Item>();
 
         char last = nombres[0].charAt(0);
         items.add(new Item(last+"", 0));
+
 
         for (int i=0; i<nombres.length; i++){
 
@@ -90,24 +181,30 @@ public class ListFragment extends Fragment {
                 last = nombres[i].charAt(0);
                 Item item = new Item(last+"", 0);
                 items.add(item);
+
             }
             String[] nombreDesordenado = nombres[i].split(" ");
             String nombreOrdenado = nombreOrdenado(nombreDesordenado);
             items.add(new Item(nombreOrdenado,1));
         }
 
-        Item[] lista = items.toArray(new Item[items.size()]);
-        return lista;
+        indexedItemArray = items;
+        adaptador.clear();
+        adaptador.addAll(items);
+        adaptador.notifyDataSetChanged();
+
     }
 
 
-    private Item[] generateIndexedItemArray(String archivo){
-
+    private void generateIndexedItemArray(String archivo){
+        if (archivo.length() ==0 || archivo == null) return;
         nombres = archivo.split("\n");
         ArrayList<Item> items = new ArrayList<Item>();
 
         char last = nombres[0].charAt(0);
-        items.add(new Item(last+"", 0));
+        Item firstLetter = new Item(last + "", 0);
+        items.add(firstLetter);
+
 
         for (int i=0; i<nombres.length; i++){
 
@@ -120,10 +217,17 @@ public class ListFragment extends Fragment {
             String[] nombreDesordenado = nombres[i].split(" ");
             String nombreOrdenado = nombreOrdenado(nombreDesordenado);
             items.add(new Item(nombreOrdenado,1));
+            String[] a = nombreOrdenado.split(" ");
+            if (a.length == 4) addStudentToDb(a[0] + " " + a[1], a[2], a[3]);
+            else if (a.length == 3) addStudentToDb(a[0], a[1], a[2]);
+            else if (a.length == 2) addStudentToDb(a[0] , a[1], "");
+            else addStudentToDb(a[a.length-1] , "", "");
         }
 
-        Item[] lista = items.toArray(new Item[items.size()]);
-        return lista;
+        indexedItemArray = items;
+        adaptador.addAll(items);
+        adaptador.notifyDataSetChanged();
+
     }
 
     private String nombreOrdenado(String[] nombreDesordenado){
@@ -143,7 +247,7 @@ public class ListFragment extends Fragment {
         }
         else{
             for (int i = 0; i<nombreDesordenado.length; i++){
-                nombreOrdenado = nombreDesordenado[i] + " ";
+                nombreOrdenado += nombreDesordenado[i] + " ";
             }
         }
         return nombreOrdenado;
@@ -174,7 +278,6 @@ public class ListFragment extends Fragment {
 
 
 
-    // TODO: DIFICULTAD: async comunicaction
     private class DownloadFileTask extends AsyncTask<String, Void, String>{
 
         @Override
@@ -186,9 +289,7 @@ public class ListFragment extends Fragment {
         @Override
         protected void onPostExecute(String result) {
             super.onPostExecute(result);
-            indexedItemArray = generateIndexedItemArray(result);
-            adaptador = new MiAdaptador(getActivity(),  R.layout.list_item , indexedItemArray);
-            listView.setAdapter(adaptador);
+            generateIndexedItemArray(result);
         }
 
         public String performRequest(String urlString) {

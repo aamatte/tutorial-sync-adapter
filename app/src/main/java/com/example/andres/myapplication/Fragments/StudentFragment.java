@@ -1,4 +1,4 @@
-package com.example.andres.myapplication;
+package com.example.andres.myapplication.Fragments;
 
 import android.app.Activity;
 import android.support.v4.app.Fragment;
@@ -7,6 +7,9 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
+
+import com.example.andres.myapplication.Activities.MainActivity;
+import com.example.andres.myapplication.R;
 
 
 /**
@@ -18,6 +21,7 @@ import android.widget.TextView;
 public class StudentFragment extends Fragment {
 
     private OnFragmentInteractionListener mListener;
+    private TextView textViewName;
 
     public StudentFragment() {
         // Required empty public constructor
@@ -38,12 +42,16 @@ public class StudentFragment extends Fragment {
             name = "Selecciona un alumno";
         }
 
-        TextView textViewName = (TextView) v.findViewById(R.id.texto);
+        textViewName = (TextView) v.findViewById(R.id.texto);
         textViewName.setText(name);
 
         return v;
     }
 
+    public void setNombre(String name){
+        if (textViewName!=null)
+        textViewName.setText(name);
+    }
 
     @Override
     public void onAttach(Activity activity) {

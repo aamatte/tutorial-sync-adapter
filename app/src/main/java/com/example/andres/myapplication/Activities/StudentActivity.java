@@ -1,9 +1,12 @@
-package com.example.andres.myapplication;
+package com.example.andres.myapplication.Activities;
 
 import android.os.Bundle;
 import android.support.v7.app.ActionBarActivity;
 import android.view.Menu;
 import android.view.MenuItem;
+
+import com.example.andres.myapplication.R;
+import com.example.andres.myapplication.Fragments.StudentFragment;
 
 
 public class StudentActivity extends ActionBarActivity implements StudentFragment.OnFragmentInteractionListener {
@@ -12,9 +15,11 @@ public class StudentActivity extends ActionBarActivity implements StudentFragmen
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_student);
+
         Bundle args = new Bundle();
         String name = getIntent().getStringExtra(MainActivity.CODE_NAME);
         args.putString(MainActivity.CODE_NAME, name);
+
         StudentFragment fragment = new StudentFragment();
         fragment.setArguments(args);
         if (savedInstanceState == null) {

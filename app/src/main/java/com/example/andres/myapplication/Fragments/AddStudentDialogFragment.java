@@ -1,4 +1,4 @@
-package com.example.andres.myapplication;
+package com.example.andres.myapplication.Fragments;
 
 import android.app.Activity;
 import android.app.AlertDialog;
@@ -10,8 +10,10 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.EditText;
 
+import com.example.andres.myapplication.R;
 
-public class AgregarAlumnoDialogFragment extends DialogFragment {
+
+public class AddStudentDialogFragment extends DialogFragment {
 
     public EditText editText;
     View v;
@@ -35,7 +37,7 @@ public class AgregarAlumnoDialogFragment extends DialogFragment {
             public void onClick(DialogInterface dialog, int id) {
                 EditText editText = (EditText) v.findViewById(R.id.dialog_student_name);
                 String name = editText.getText().toString();
-                mListener.onDialogPositiveClick(AgregarAlumnoDialogFragment.this , name);
+                mListener.onDialogPositiveClick(AddStudentDialogFragment.this , name);
             }
         })
                 .setNegativeButton(R.string.dialog_agregar_alumno_negative, new DialogInterface.OnClickListener() {

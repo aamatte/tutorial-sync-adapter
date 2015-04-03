@@ -1,4 +1,4 @@
-package com.example.andres.myapplication;
+package com.example.andres.myapplication.Model;
 
 /**
  * Created by andres on 19-03-15.

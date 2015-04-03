@@ -1,4 +1,4 @@
-package com.example.andres.myapplication;
+package com.example.andres.myapplication.Activities;
 
 import android.app.DialogFragment;
 import android.support.v7.app.ActionBarActivity;
@@ -7,8 +7,13 @@ import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuItem;
 
-public class MainActivity extends ActionBarActivity implements ListFragment.OnFragmentInteractionListener, StudentFragment.OnFragmentInteractionListener, AgregarAlumnoDialogFragment.NoticeDialogListener {
+import com.example.andres.myapplication.Fragments.AddStudentDialogFragment;
+import com.example.andres.myapplication.Fragments.ListFragment;
+import com.example.andres.myapplication.Model.Item;
+import com.example.andres.myapplication.R;
+import com.example.andres.myapplication.Fragments.StudentFragment;
 
+public class MainActivity extends ActionBarActivity implements ListFragment.OnFragmentInteractionListener, StudentFragment.OnFragmentInteractionListener, AddStudentDialogFragment.NoticeDialogListener {
 
     public static final String CODE_NAME = "name";
     /** Genera arreglo de Items indexado por letra. Recibe arreglo de strings ordenados. */
@@ -17,12 +22,6 @@ public class MainActivity extends ActionBarActivity implements ListFragment.OnFr
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-      //  if (savedInstanceState == null) {
-       //     getSupportFragmentManager().beginTransaction()
-         //           .add(R.id.list_frag, new ListFragment())
-           //         .commit();
-       // }
-
     }
 
 
@@ -45,7 +44,7 @@ public class MainActivity extends ActionBarActivity implements ListFragment.OnFr
             return true;
         }
         else if (id == R.id.action_agregar){
-            AgregarAlumnoDialogFragment dialog = new AgregarAlumnoDialogFragment();
+            AddStudentDialogFragment dialog = new AddStudentDialogFragment();
             dialog.show(this.getFragmentManager(), "dialog");
         }
         return super.onOptionsItemSelected(item);
@@ -56,24 +55,20 @@ public class MainActivity extends ActionBarActivity implements ListFragment.OnFr
 
         String name = item.getmTexto();
 
-        // TODO: SI EL OTRO FRAGMENT NO ES NULO
-        if (false){
-            // Fragment de la lista
-            StudentFragment studentFragment = new StudentFragment();
+        StudentFragment studentFrag = (StudentFragment) getSupportFragmentManager()
+                .findFragmentById(R.id.student_fragment);
 
-            Bundle args = new Bundle();
-            args.putString(CODE_NAME, name);
+        // http://codereview.stackexchange.com/questions/64045/two-fragments-in-landscape-mode-challenge
 
-            studentFragment.setArguments(args);
-
-            getSupportFragmentManager().beginTransaction()
-                    .replace(R.id.layout, studentFragment)
-                    .addToBackStack(null)
-                    .commit();
+        if (studentFrag != null && studentFrag.isVisible()){
+                studentFrag.setNombre(item.getmTexto());
         }
-        Intent intent = new Intent(this,StudentActivity.class );
-        intent.putExtra(CODE_NAME, name);
-        startActivity(intent);
+        else{
+            Intent intent = new Intent(this,StudentActivity.class );
+            intent.putExtra(CODE_NAME, name);
+            startActivity(intent);
+        }
+
     }
 
     @Override
@@ -84,9 +79,10 @@ public class MainActivity extends ActionBarActivity implements ListFragment.OnFr
     @Override
     public void onDialogPositiveClick(DialogFragment dialog, String name) {
         ListFragment listFrag = (ListFragment)
-                getSupportFragmentManager().findFragmentById(R.id.layout);
+                getSupportFragmentManager().findFragmentById(R.id.fragment_list);
         if (listFrag == null) return;
-        listFrag.agregarAlumno(name);
+
+        listFrag.addStudent(name);
 
     }
 

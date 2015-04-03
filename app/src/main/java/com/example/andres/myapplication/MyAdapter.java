@@ -7,16 +7,18 @@ import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.TextView;
 
-import org.w3c.dom.Text;
+import com.example.andres.myapplication.Model.Item;
+
+import java.util.ArrayList;
 
 /**
  * Created by andres on 19-03-15.
  */
-public class MiAdaptador extends ArrayAdapter<Item>
+public class MyAdapter extends ArrayAdapter<Item>
 {
     private LayoutInflater mLayoutInflator;
 
-    public MiAdaptador(Context context, int resource, Item[] objects){
+    public MyAdapter(Context context, int resource, ArrayList<Item> objects){
         super(context, resource, objects);
         mLayoutInflator = (LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
     }
@@ -56,4 +58,5 @@ public class MiAdaptador extends ArrayAdapter<Item>
         Item contenido = getItem(position);
         return contenido.getmTipoCelda();
     }
+
 }
