@@ -138,7 +138,17 @@ public class ListFragment extends Fragment {
 
         SQLiteDatabase db = mDbHelper.getReadableDatabase();
 
-        Cursor c = db.rawQuery("SELECT * FROM STUDENTS ORDER BY "+ DatabaseContract.Students.COLUMN_NAME_FIRST_LASTNAME +" ASC", null);
+        //Cursor c = db.rawQuery("SELECT * FROM STUDENTS ORDER BY "+ DatabaseContract.Students.COLUMN_NAME_FIRST_LASTNAME +" ASC", null);
+
+
+        Cursor c = db.query(DatabaseContract.Students.TABLE_NAME,
+                            null,
+                            null,
+                            null,
+                            null,
+                            null,
+                            DatabaseContract.Students.COLUMN_NAME_FIRST_LASTNAME +" ASC", null);
+
         ArrayList<String> students = new ArrayList<String>();
 
         c.moveToFirst();

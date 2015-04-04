@@ -15,7 +15,7 @@ public final class DatabaseContract {
 
     public static abstract class Students implements BaseColumns {
         // TABLE STUDENTS
-        public static final String TABLE_NAME = "students";
+        public static final String TABLE_NAME = "STUDENTS";
         public static final String COLUMN_NAME_STUDENT_NAMES = "names";
         public static final String COLUMN_NAME_FIRST_LASTNAME = "firstlastname";
         public static final String COLUMN_NAME_SECOND_LASTNAME = "secondlastname";
