@@ -77,12 +77,12 @@ public class MainActivity extends ActionBarActivity implements ListFragment.OnFr
     }
 
     @Override
-    public void onDialogPositiveClick(DialogFragment dialog, String name) {
+    public void onDialogPositiveClick(DialogFragment dialog, String name, String firstLastname, String secondLastname) {
         ListFragment listFrag = (ListFragment)
                 getSupportFragmentManager().findFragmentById(R.id.fragment_list);
         if (listFrag == null) return;
 
-        listFrag.addStudent(name);
+        listFrag.addStudent(name, firstLastname, secondLastname);
 
     }
 

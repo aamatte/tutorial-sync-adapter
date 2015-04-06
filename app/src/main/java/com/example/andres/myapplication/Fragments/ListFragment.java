@@ -82,15 +82,13 @@ public class ListFragment extends Fragment {
 
     }
 
-    public void addStudent(String name){
-        addItemToIndexedArray(name);
-        String[] n = name.split(" ");
-        if (n.length == 3) addStudentToDb(n[1], n[2], n[0]);
-        if (n.length == 4) addStudentToDb(n[2]+ " " + n[3], n[0], n[1]);
-        else addStudentToDb(n[1], n[0], "");
+    public void addStudent(String name, String firstLastname, String secondLastname){
+        addItemToIndexedArray(name, firstLastname, secondLastname);
+
+        addStudentToDb(name, firstLastname, secondLastname);
     }
 
-    private void addItemToIndexedArray(String nombre){
+    private void addItemToIndexedArray(String nombre, String firstLastname, String secondLastname){
 
         String[] newArray = new String[nombres.length+1];
         nombre = Character.toUpperCase(nombre.charAt(0)) + nombre.substring(1);
@@ -98,7 +96,7 @@ public class ListFragment extends Fragment {
         for (int i=0; i<nombres.length; i++){
             newArray[i] = nombres[i];
         }
-        newArray[nombres.length] = nombre;
+        newArray[nombres.length] = firstLastname + " " + secondLastname + " " + nombre;
         Arrays.sort(newArray);
         nombres = newArray;
         generateIndexedItemArray();
@@ -107,7 +105,7 @@ public class ListFragment extends Fragment {
     private void addStudentToDb(String name, String firstLastname, String secondLastname){
 
         if (mDbHelper == null) {
-            mDbHelper = new DatabaseContract.Students.StudentsDbHelper(getActivity());
+            mDbHelper = DatabaseContract.Students.StudentsDbHelper.getInstance(getActivity());
         }
 
 
@@ -131,14 +129,12 @@ public class ListFragment extends Fragment {
     private boolean selectStudentsFromDb(){
 
         if (mDbHelper == null) {
-            mDbHelper = new DatabaseContract.Students.StudentsDbHelper(getActivity());
+            mDbHelper = DatabaseContract.Students.StudentsDbHelper.getInstance(getActivity());
         }
 
 
 
         SQLiteDatabase db = mDbHelper.getReadableDatabase();
-
-        //Cursor c = db.rawQuery("SELECT * FROM STUDENTS ORDER BY "+ DatabaseContract.Students.COLUMN_NAME_FIRST_LASTNAME +" ASC", null);
 
 
         Cursor c = db.query(DatabaseContract.Students.TABLE_NAME,
@@ -158,9 +154,9 @@ public class ListFragment extends Fragment {
         }
 
         while (c.moveToNext()){
-            String names = c.getString(c.getColumnIndexOrThrow(DatabaseContract.Students.COLUMN_NAME_STUDENT_NAMES));
-            String firstLast = c.getString(c.getColumnIndexOrThrow(DatabaseContract.Students.COLUMN_NAME_FIRST_LASTNAME));
-            String secondLast = c.getString(c.getColumnIndexOrThrow(DatabaseContract.Students.COLUMN_NAME_SECOND_LASTNAME));
+            String names = c.getString(c.getColumnIndexOrThrow(DatabaseContract.Students.COLUMN_NAME_STUDENT_NAMES)).toUpperCase();
+            String firstLast = c.getString(c.getColumnIndexOrThrow(DatabaseContract.Students.COLUMN_NAME_FIRST_LASTNAME)).toUpperCase();
+            String secondLast = c.getString(c.getColumnIndexOrThrow(DatabaseContract.Students.COLUMN_NAME_SECOND_LASTNAME)).toUpperCase();
             students.add(firstLast + " " + secondLast + " " + names);
         }
 
@@ -205,7 +201,7 @@ public class ListFragment extends Fragment {
 
     }
 
-
+    // Generate indexed Array and add the students to the database. Only use when there is no data in the database.
     private void generateIndexedItemArray(String archivo){
         if (archivo.length() ==0 || archivo == null) return;
         nombres = archivo.split("\n");
@@ -219,7 +215,7 @@ public class ListFragment extends Fragment {
         for (int i=0; i<nombres.length; i++){
 
             if (last != nombres[i].charAt(0)){
-
+                nombres[i] = nombres[i].toUpperCase();
                 last = nombres[i].charAt(0);
                 Item item = new Item(last+"", 0);
                 items.add(item);

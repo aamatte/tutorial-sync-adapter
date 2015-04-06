@@ -41,9 +41,18 @@ public final class DatabaseContract {
 
             public static final int DATABASE_VERSION = 1;
             public static final String DATABASE_NAME = "Students.db";
+            private static StudentsDbHelper sInstance;
 
-            public StudentsDbHelper(Context context) {
+            private StudentsDbHelper(Context context) {
                 super(context, DATABASE_NAME, null, DATABASE_VERSION);
+            }
+
+            public static synchronized StudentsDbHelper getInstance(Context context) {
+
+                if (sInstance == null) {
+                    sInstance = new StudentsDbHelper(context.getApplicationContext());
+                }
+                return sInstance;
             }
 
             @Override
