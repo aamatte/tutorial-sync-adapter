@@ -8,9 +8,8 @@ import android.provider.BaseColumns;
 /**
  * Created by andres on 02-04-15.
  */
-public final class DatabaseContract {
-
-    public DatabaseContract() {
+public final class DatabaseManagement {
+    public DatabaseManagement() {
     }
 
     public static abstract class Students implements BaseColumns {
@@ -20,8 +19,11 @@ public final class DatabaseContract {
         public static final String COLUMN_NAME_FIRST_LASTNAME = "firstlastname";
         public static final String COLUMN_NAME_SECOND_LASTNAME = "secondlastname";
 
+
         public static final String TEXT_TYPE = " TEXT";
         public static final String COMMA_SEP = ",";
+
+
         public static final String SQL_CREATE_STUDENTS_TABLE =
                 "CREATE TABLE " + Students.TABLE_NAME + " (" +
                         Students._ID + " INTEGER PRIMARY KEY," +
@@ -41,6 +43,7 @@ public final class DatabaseContract {
 
             public static final int DATABASE_VERSION = 1;
             public static final String DATABASE_NAME = "Students.db";
+
             private static StudentsDbHelper sInstance;
 
             private StudentsDbHelper(Context context) {

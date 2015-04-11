@@ -1,22 +1,36 @@
 package com.example.andres.myapplication.Activities;
 
 import android.app.DialogFragment;
-import android.support.v7.app.ActionBarActivity;
+import android.content.ComponentName;
+import android.content.Context;
 import android.content.Intent;
+import android.content.ServiceConnection;
 import android.os.Bundle;
+import android.os.IBinder;
+import android.support.v7.app.ActionBarActivity;
 import android.view.Menu;
 import android.view.MenuItem;
 
 import com.example.andres.myapplication.Fragments.AddStudentDialogFragment;
 import com.example.andres.myapplication.Fragments.ListFragment;
+import com.example.andres.myapplication.Fragments.StudentFragment;
 import com.example.andres.myapplication.Model.Item;
 import com.example.andres.myapplication.R;
-import com.example.andres.myapplication.Fragments.StudentFragment;
+import com.example.andres.myapplication.Services.SyncService;
+
+import org.json.JSONArray;
+import org.json.JSONException;
+
+import java.util.ArrayList;
+import java.util.concurrent.ExecutionException;
 
 public class MainActivity extends ActionBarActivity implements ListFragment.OnFragmentInteractionListener, StudentFragment.OnFragmentInteractionListener, AddStudentDialogFragment.NoticeDialogListener {
 
     public static final String CODE_NAME = "name";
-    /** Genera arreglo de Items indexado por letra. Recibe arreglo de strings ordenados. */
+    SyncService mService;
+    boolean mBound = false;
+
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -24,6 +38,40 @@ public class MainActivity extends ActionBarActivity implements ListFragment.OnFr
         setContentView(R.layout.activity_main);
     }
 
+    @Override
+    protected void onStart(){
+        super.onStart();
+        // Bind to SyncService
+        Intent intent = new Intent (this, SyncService.class);
+        bindService(intent, mConnection, Context.BIND_AUTO_CREATE);
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+        // Unbind from the service
+        if (mBound) {
+            unbindService(mConnection);
+            mBound = false;
+        }
+    }
+
+    /** Defines callbacks for service binding, passed to bindService() */
+
+    private ServiceConnection mConnection = new ServiceConnection() {
+        @Override
+        public void onServiceConnected(ComponentName name, IBinder service) {
+
+            SyncService.LocalBinder binder = (SyncService.LocalBinder) service;
+            mService = binder.getService();
+            mBound = true;
+        }
+
+        @Override
+        public void onServiceDisconnected(ComponentName name) {
+            mBound = false;
+        }
+    };
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
@@ -47,6 +95,31 @@ public class MainActivity extends ActionBarActivity implements ListFragment.OnFr
             AddStudentDialogFragment dialog = new AddStudentDialogFragment();
             dialog.show(this.getFragmentManager(), "dialog");
         }
+
+        else if (id == R.id.sync_students_button){
+            if (mBound){
+                JSONArray students = new JSONArray();
+                try {
+                    students = mService.getStudents();
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                } catch (ExecutionException e) {
+                    e.printStackTrace();
+                }
+
+                //TODO: make operations with students here
+                ListFragment listFrag = (ListFragment) getSupportFragmentManager()
+                        .findFragmentById(R.id.fragment_list);
+                try {
+                    listFrag.mergeWithCloud(students);
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+
         return super.onOptionsItemSelected(item);
     }
 
@@ -58,8 +131,6 @@ public class MainActivity extends ActionBarActivity implements ListFragment.OnFr
         StudentFragment studentFrag = (StudentFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.student_fragment);
 
-        // http://codereview.stackexchange.com/questions/64045/two-fragments-in-landscape-mode-challenge
-
         if (studentFrag != null && studentFrag.isVisible()){
                 studentFrag.setNombre(item.getmTexto());
         }
@@ -69,6 +140,13 @@ public class MainActivity extends ActionBarActivity implements ListFragment.OnFr
             startActivity(intent);
         }
 
+    }
+
+    @Override
+    public void onAddStudentsToCloud(ArrayList<String> students) {
+        if (mBound){
+            mService.addStudents(students);
+        }
     }
 
     @Override

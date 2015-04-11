@@ -15,8 +15,12 @@ import android.widget.ListView;
 
 import com.example.andres.myapplication.Model.Item;
 import com.example.andres.myapplication.MyAdapter;
-import com.example.andres.myapplication.Persistence.DatabaseContract;
+import com.example.andres.myapplication.Persistence.DatabaseManagement;
 import com.example.andres.myapplication.R;
+
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
 
 import java.io.BufferedReader;
 import java.io.InputStream;
@@ -35,7 +39,7 @@ public class ListFragment extends Fragment {
     private String[] nombres;
     private MyAdapter adaptador;
     private ListView listView;
-    DatabaseContract.Students.StudentsDbHelper mDbHelper;
+    DatabaseManagement.Students.StudentsDbHelper mDbHelper;
 
 
     @Override
@@ -105,7 +109,7 @@ public class ListFragment extends Fragment {
     private void addStudentToDb(String name, String firstLastname, String secondLastname){
 
         if (mDbHelper == null) {
-            mDbHelper = DatabaseContract.Students.StudentsDbHelper.getInstance(getActivity());
+            mDbHelper = DatabaseManagement.Students.StudentsDbHelper.getInstance(getActivity());
         }
 
 
@@ -113,13 +117,13 @@ public class ListFragment extends Fragment {
 
 
         ContentValues values = new ContentValues();
-        values.put(DatabaseContract.Students.COLUMN_NAME_STUDENT_NAMES, name);
-        values.put(DatabaseContract.Students.COLUMN_NAME_FIRST_LASTNAME, firstLastname);
-        values.put(DatabaseContract.Students.COLUMN_NAME_SECOND_LASTNAME, secondLastname);
+        values.put(DatabaseManagement.Students.COLUMN_NAME_STUDENT_NAMES, name);
+        values.put(DatabaseManagement.Students.COLUMN_NAME_FIRST_LASTNAME, firstLastname);
+        values.put(DatabaseManagement.Students.COLUMN_NAME_SECOND_LASTNAME, secondLastname);
 
         long newRowId;
         newRowId = db.insert(
-                DatabaseContract.Students.TABLE_NAME,
+                DatabaseManagement.Students.TABLE_NAME,
                 null,
                 values);
 
@@ -129,7 +133,7 @@ public class ListFragment extends Fragment {
     private boolean selectStudentsFromDb(){
 
         if (mDbHelper == null) {
-            mDbHelper = DatabaseContract.Students.StudentsDbHelper.getInstance(getActivity());
+            mDbHelper = DatabaseManagement.Students.StudentsDbHelper.getInstance(getActivity());
         }
 
 
@@ -137,13 +141,13 @@ public class ListFragment extends Fragment {
         SQLiteDatabase db = mDbHelper.getReadableDatabase();
 
 
-        Cursor c = db.query(DatabaseContract.Students.TABLE_NAME,
+        Cursor c = db.query(DatabaseManagement.Students.TABLE_NAME,
                             null,
                             null,
                             null,
                             null,
                             null,
-                            DatabaseContract.Students.COLUMN_NAME_FIRST_LASTNAME +" ASC", null);
+                            DatabaseManagement.Students.COLUMN_NAME_FIRST_LASTNAME +" ASC", null);
 
         ArrayList<String> students = new ArrayList<String>();
 
@@ -154,9 +158,9 @@ public class ListFragment extends Fragment {
         }
 
         while (c.moveToNext()){
-            String names = c.getString(c.getColumnIndexOrThrow(DatabaseContract.Students.COLUMN_NAME_STUDENT_NAMES)).toUpperCase();
-            String firstLast = c.getString(c.getColumnIndexOrThrow(DatabaseContract.Students.COLUMN_NAME_FIRST_LASTNAME)).toUpperCase();
-            String secondLast = c.getString(c.getColumnIndexOrThrow(DatabaseContract.Students.COLUMN_NAME_SECOND_LASTNAME)).toUpperCase();
+            String names = c.getString(c.getColumnIndexOrThrow(DatabaseManagement.Students.COLUMN_NAME_STUDENT_NAMES)).toUpperCase();
+            String firstLast = c.getString(c.getColumnIndexOrThrow(DatabaseManagement.Students.COLUMN_NAME_FIRST_LASTNAME)).toUpperCase();
+            String secondLast = c.getString(c.getColumnIndexOrThrow(DatabaseManagement.Students.COLUMN_NAME_SECOND_LASTNAME)).toUpperCase();
             students.add(firstLast + " " + secondLast + " " + names);
         }
 
@@ -270,6 +274,39 @@ public class ListFragment extends Fragment {
         }
     }
 
+    public ArrayList<String> cloudToPhone(JSONArray jsonArray) throws JSONException {
+        ArrayList<String> arrayList = new ArrayList<String>();
+        for (int i=0; i<jsonArray.length(); i++){
+            JSONObject student = jsonArray.getJSONObject(i);
+            String name = student.getString("name");
+            String firstLastname = student.getString("first_lastname");
+            String secondLastname = student.getString("second_lastname");
+            arrayList.add(firstLastname+" "+secondLastname + " " + name);
+            if (!Arrays.asList(nombres).contains(firstLastname+" "+secondLastname + " " + name)){
+                addStudent(name, firstLastname, secondLastname);
+            }
+        }
+        return arrayList;
+    }
+
+    public void phoneToCloud(ArrayList<String> array) throws JSONException {
+
+        ArrayList<String> studentsNotInCloud = new ArrayList<String>();
+        for (int i=0; i<nombres.length; i++){
+            if (!Arrays.asList(array).contains(nombres[i])){
+                studentsNotInCloud.add(nombres[i]);
+            }
+        }
+        mListener.onAddStudentsToCloud(studentsNotInCloud);
+
+    }
+
+    public void mergeWithCloud(JSONArray jsonArray) throws JSONException {
+        ArrayList<String> studentsInCloud = cloudToPhone(jsonArray);
+        phoneToCloud(studentsInCloud);
+
+    }
+
     @Override
     public void onDetach() {
         super.onDetach();
@@ -279,6 +316,7 @@ public class ListFragment extends Fragment {
 
     public interface OnFragmentInteractionListener {
         public void onFragmentInteractionList(Item item);
+        public void onAddStudentsToCloud(ArrayList<String> students);
     }
 
 

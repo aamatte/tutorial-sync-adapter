@@ -29,6 +29,12 @@
             android:enabled="true"
             android:exported="true" >
         </provider>
+
+        <service
+            android:name=".Services.SyncService"
+            android:enabled="true"
+            android:exported="true" >
+        </service>
     </application>
 
 </manifest>

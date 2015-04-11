@@ -8,7 +8,7 @@ import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteQueryBuilder;
 import android.net.Uri;
 
-import com.example.andres.myapplication.Persistence.DatabaseContract;
+import com.example.andres.myapplication.Persistence.DatabaseManagement;
 
 public class StudentsProvider extends ContentProvider {
 
@@ -24,7 +24,7 @@ public class StudentsProvider extends ContentProvider {
 
     }
 
-    private DatabaseContract.Students.StudentsDbHelper mDbHelper;
+    private DatabaseManagement.Students.StudentsDbHelper mDbHelper;
     private static final String DBNAME = "Students";
 
 
@@ -58,7 +58,7 @@ public class StudentsProvider extends ContentProvider {
 
     @Override
     public boolean onCreate() {
-        mDbHelper = DatabaseContract.Students.StudentsDbHelper.getInstance(getContext());
+        mDbHelper = DatabaseManagement.Students.StudentsDbHelper.getInstance(getContext());
         return true;
     }
 
@@ -67,30 +67,27 @@ public class StudentsProvider extends ContentProvider {
                         String[] selectionArgs, String sortOrder) {
         SQLiteDatabase db = mDbHelper.getReadableDatabase();
         SQLiteQueryBuilder builder = new SQLiteQueryBuilder();
-        boolean useAuthorityUri = false;
 
         switch (sUriMatcher.match(uri)){
             case STUDENT_LIST:
-                builder.setTables(DatabaseContract.Students.TABLE_NAME);
+                builder.setTables(DatabaseManagement.Students.TABLE_NAME);
                 break;
             case STUDENT_ID:
-                builder.setTables(DatabaseContract.Students.TABLE_NAME);
-                builder.appendWhere(DatabaseContract.Students._ID + " = " +
+                builder.setTables(DatabaseManagement.Students.TABLE_NAME);
+                builder.appendWhere(DatabaseManagement.Students._ID + " = " +
                         uri.getLastPathSegment());
                 break;
             default:
                 throw new IllegalArgumentException(
                         "Unsupported URI: " + uri);
         }
-        Cursor cursor =
-        builder.query(
-                db,
-                projection,
-                selection,
-                selectionArgs,
-                null,
-                null,
-                sortOrder);
+        Cursor cursor = builder.query(db,
+                                     projection,
+                                     selection,
+                                     selectionArgs,
+                                     null,
+                                     null,
+                                     sortOrder);
         return cursor;
 
     }
