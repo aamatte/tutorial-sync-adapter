@@ -10,6 +10,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.EditText;
 
+import com.example.andres.myapplication.Model.Student;
 import com.example.andres.myapplication.R;
 
 
@@ -20,7 +21,7 @@ public class AddStudentDialogFragment extends DialogFragment {
     private NoticeDialogListener mListener;
 
     public interface NoticeDialogListener {
-        public void onDialogPositiveClick(DialogFragment dialog, String name, String firstLastname, String secondLastname);
+        public void onDialogPositiveClick(DialogFragment dialog, Student student);
         public void onDialogNegativeClick(DialogFragment dialog);
     }
 
@@ -40,8 +41,8 @@ public class AddStudentDialogFragment extends DialogFragment {
                 String name = ((EditText) v.findViewById(R.id.dialog_student_name)).getText().toString().toUpperCase();
                 String firstLastname = ((EditText) v.findViewById(R.id.dialog_first_lastname)).getText().toString().toUpperCase();
                 String secondLastname = ((EditText) v.findViewById(R.id.dialog_second_lastname)).getText().toString().toUpperCase();
-
-                mListener.onDialogPositiveClick(AddStudentDialogFragment.this , name, firstLastname, secondLastname);
+                Student student = new Student(name, firstLastname, secondLastname);
+                mListener.onDialogPositiveClick(AddStudentDialogFragment.this , student);
             }
         })
                 .setNegativeButton(R.string.dialog_agregar_alumno_negative, new DialogInterface.OnClickListener() {

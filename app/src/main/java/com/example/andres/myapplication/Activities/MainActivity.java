@@ -6,7 +6,11 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
 import android.os.Bundle;
+import android.os.Handler;
 import android.os.IBinder;
+import android.os.Message;
+import android.os.Messenger;
+import android.os.RemoteException;
 import android.support.v7.app.ActionBarActivity;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -15,6 +19,7 @@ import com.example.andres.myapplication.Fragments.AddStudentDialogFragment;
 import com.example.andres.myapplication.Fragments.ListFragment;
 import com.example.andres.myapplication.Fragments.StudentFragment;
 import com.example.andres.myapplication.Model.Item;
+import com.example.andres.myapplication.Model.Student;
 import com.example.andres.myapplication.R;
 import com.example.andres.myapplication.Services.SyncService;
 
@@ -22,20 +27,56 @@ import org.json.JSONArray;
 import org.json.JSONException;
 
 import java.util.ArrayList;
-import java.util.concurrent.ExecutionException;
 
-public class MainActivity extends ActionBarActivity implements ListFragment.OnFragmentInteractionListener, StudentFragment.OnFragmentInteractionListener, AddStudentDialogFragment.NoticeDialogListener {
+public class MainActivity extends ActionBarActivity implements ListFragment.OnFragmentInteractionListener, StudentFragment.OnFragmentInteractionListener,  AddStudentDialogFragment.NoticeDialogListener {
 
     public static final String CODE_NAME = "name";
     SyncService mService;
     boolean mBound = false;
+    private Messenger mServiceMessenger = null;
 
+    private final Messenger mMessenger = new Messenger(new IncomingMessageHandler());
+
+
+
+    private class IncomingMessageHandler extends Handler {
+        @Override
+        public void handleMessage(Message msg) {
+            // Log.d(LOGTAG,"IncomingHandler:handleMessage");
+            switch (msg.what) {
+                case SyncService.STUDENT_GETTED:
+                    String students = msg.getData().getString("students");
+                    try {
+                        onStudentsGetted(new JSONArray(students));
+                    } catch (JSONException e) {
+                        e.printStackTrace();
+                    }
+
+                    break;
+                case SyncService.UPGRADE_STUDENT:
+                    Bundle bundle = msg.getData();
+
+                    String names = bundle.getString("names");
+                    String fln = bundle.getString("firstlastname");
+                    String sln = bundle.getString("secondlastname");
+                    int idcloud = bundle.getInt("idcloud");
+
+                    upgradeStudent(new Student(names, fln, sln, idcloud));
+
+                    break;
+
+                default:
+                    super.handleMessage(msg);
+            }
+        }
+    }
 
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
     }
 
     @Override
@@ -62,14 +103,24 @@ public class MainActivity extends ActionBarActivity implements ListFragment.OnFr
         @Override
         public void onServiceConnected(ComponentName name, IBinder service) {
 
-            SyncService.LocalBinder binder = (SyncService.LocalBinder) service;
-            mService = binder.getService();
+            mServiceMessenger = new Messenger(service);
+
+            try {
+                Message msg = Message.obtain(null, SyncService.MSG_REGISTER_CLIENT);
+                msg.replyTo = mMessenger;
+                mServiceMessenger.send(msg);
+
+            }
+            catch (RemoteException e) {
+                // In this case the service has crashed before we could even do anything with it
+            }
             mBound = true;
         }
 
         @Override
         public void onServiceDisconnected(ComponentName name) {
             mBound = false;
+
         }
     };
 
@@ -97,32 +148,36 @@ public class MainActivity extends ActionBarActivity implements ListFragment.OnFr
         }
 
         else if (id == R.id.sync_students_button){
-            if (mBound){
-                JSONArray students = new JSONArray();
-                try {
-                    students = mService.getStudents();
-                } catch (JSONException e) {
-                    e.printStackTrace();
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                } catch (ExecutionException e) {
-                    e.printStackTrace();
-                }
 
-                //TODO: make operations with students here
-                ListFragment listFrag = (ListFragment) getSupportFragmentManager()
-                        .findFragmentById(R.id.fragment_list);
-                try {
-                    listFrag.mergeWithCloud(students);
-                } catch (JSONException e) {
-                    e.printStackTrace();
-                }
-            }
+            syncWithCloud();
+
         }
 
         return super.onOptionsItemSelected(item);
     }
 
+    private void upgradeStudent(Student student){
+
+        ListFragment listFrag = (ListFragment) getSupportFragmentManager()
+                .findFragmentById(R.id.fragment_list);
+
+        listFrag.upgradeStudent(student);
+
+    }
+
+    private void syncWithCloud() {
+        if (mBound){
+
+            try {
+                Message msg = Message.obtain(null, SyncService.SYNC_REQUESTED);
+                mServiceMessenger.send(msg);
+            }
+            catch (RemoteException e) {
+                // In this case the service has crashed before we could even do anything with it
+            }
+        }
+
+    }
     @Override
     public void onFragmentInteractionList(Item item) {
 
@@ -143,10 +198,16 @@ public class MainActivity extends ActionBarActivity implements ListFragment.OnFr
     }
 
     @Override
-    public void onAddStudentsToCloud(ArrayList<String> students) {
+    public void onAddStudentsToCloud(ArrayList<Student> students) {
         if (mBound){
-            mService.addStudents(students);
+            //mService.addStudents(students);
         }
+    }
+
+    @Override
+    public void onGetStudentsFromCloud() {
+         syncWithCloud();
+
     }
 
     @Override
@@ -155,12 +216,12 @@ public class MainActivity extends ActionBarActivity implements ListFragment.OnFr
     }
 
     @Override
-    public void onDialogPositiveClick(DialogFragment dialog, String name, String firstLastname, String secondLastname) {
+    public void onDialogPositiveClick(DialogFragment dialog, Student student) {
         ListFragment listFrag = (ListFragment)
                 getSupportFragmentManager().findFragmentById(R.id.fragment_list);
         if (listFrag == null) return;
 
-        listFrag.addStudent(name, firstLastname, secondLastname);
+        listFrag.addStudent(student);
 
     }
 
@@ -168,4 +229,17 @@ public class MainActivity extends ActionBarActivity implements ListFragment.OnFr
     public void onDialogNegativeClick(DialogFragment dialog) {
 
     }
+
+
+    public void onStudentsGetted(JSONArray jsonArray) {
+        ListFragment listFrag = (ListFragment) getSupportFragmentManager()
+                .findFragmentById(R.id.fragment_list);
+        try {
+            listFrag.mergeWithCloud(jsonArray);
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+    }
+
+
 }

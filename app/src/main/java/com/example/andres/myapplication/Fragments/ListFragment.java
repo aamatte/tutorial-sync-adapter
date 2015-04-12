@@ -14,6 +14,7 @@ import android.widget.AdapterView;
 import android.widget.ListView;
 
 import com.example.andres.myapplication.Model.Item;
+import com.example.andres.myapplication.Model.Student;
 import com.example.andres.myapplication.MyAdapter;
 import com.example.andres.myapplication.Persistence.DatabaseManagement;
 import com.example.andres.myapplication.R;
@@ -36,9 +37,12 @@ public class ListFragment extends Fragment {
     private OnFragmentInteractionListener mListener;
     private final String linkDescargaArchivo = "https://drive.google.com/uc?export=download&id=0B8yZfi78R0lEd2NRb2dRZGtPM2M";
     private ArrayList<Item> indexedItemArray = new ArrayList<Item>();
-    private String[] nombres;
+    private ArrayList<String> nombres;
+    private ArrayList<Student> students;
     private MyAdapter adaptador;
     private ListView listView;
+    ArrayList<Integer> idCloudFromPhone;
+
     DatabaseManagement.Students.StudentsDbHelper mDbHelper;
 
 
@@ -48,14 +52,9 @@ public class ListFragment extends Fragment {
 
         View v = inflater.inflate(R.layout.fragment_list, container, false);
         adaptador = new MyAdapter(v.getContext() , R.layout.list_item , indexedItemArray);
-
-        if (savedInstanceState != null){
-            nombres = savedInstanceState.getStringArray("alumnos");
-            generateIndexedItemArray();
-        }
-        else if (!selectStudentsFromDb()){
-            DownloadFileTask downloadFileTask = new DownloadFileTask();
-            downloadFileTask.execute(linkDescargaArchivo);
+        students = new ArrayList<Student>();
+        if (!selectStudentsFromDb()){
+            mListener.onGetStudentsFromCloud();
         }
         // Inflate the layout for this fragment
         listView = (ListView) v.findViewById(R.id.list_students);
@@ -77,36 +76,53 @@ public class ListFragment extends Fragment {
 
     }
 
-    @Override
-    public void onSaveInstanceState(Bundle savedState) {
 
-        // Note: getValues() is a method in your ArrayAdaptor subclass
-        savedState.putStringArray("alumnos", nombres);
-        super.onSaveInstanceState(savedState);
 
-    }
-
-    public void addStudent(String name, String firstLastname, String secondLastname){
-        addItemToIndexedArray(name, firstLastname, secondLastname);
-
-        addStudentToDb(name, firstLastname, secondLastname);
-    }
-
-    private void addItemToIndexedArray(String nombre, String firstLastname, String secondLastname){
-
-        String[] newArray = new String[nombres.length+1];
-        nombre = Character.toUpperCase(nombre.charAt(0)) + nombre.substring(1);
-
-        for (int i=0; i<nombres.length; i++){
-            newArray[i] = nombres[i];
+    private ArrayList<Student> stringArrayToStudentArray(ArrayList<String>  stringArrayList, ArrayList<Student>  studentArrayList){
+        if (studentArrayList==null){
+            studentArrayList = new ArrayList<Student>();
         }
-        newArray[nombres.length] = firstLastname + " " + secondLastname + " " + nombre;
-        Arrays.sort(newArray);
-        nombres = newArray;
+        for (int i=0; i<stringArrayList.size(); i++){
+            String[] name = stringArrayList.get(i).split(" ");
+            if (name.length == 4){
+                studentArrayList.add(new Student(name[2] + " " + name[3], name[0], name[1]));
+            }
+            else if (name.length==3){
+                studentArrayList.add(new Student(name[2], name[0], name[1]));
+            }
+            else if (name.length == 2){
+                studentArrayList.add(new Student(name[1], name[0]));
+            }
+        }
+        return studentArrayList;
+    }
+
+    private ArrayList<String> studentArrayToStringArray(ArrayList<Student> students,ArrayList<String>  strings ){
+        if (strings==null){
+            strings = new ArrayList<String>();
+        }
+        for (int i=0; i<students.size(); i++){
+            Student s = students.get(i);
+            strings.add(s.getFirstLastname() + " "+ s.getSecondLastname() +" "+ s.getNames());
+        }
+        return strings;
+    }
+
+
+
+    public void addStudent(Student student){
+
+        // TODO: Agregar columna idCloud a tabla y adaptar metodos para eso
+        addStudentToIndexedArray(student);
+        addStudentToDb(student);
+    }
+
+    private void addStudentToIndexedArray(Student student){
+        students.add(student);
         generateIndexedItemArray();
     }
 
-    private void addStudentToDb(String name, String firstLastname, String secondLastname){
+    private void addStudentToDb(Student student){
 
         if (mDbHelper == null) {
             mDbHelper = DatabaseManagement.Students.StudentsDbHelper.getInstance(getActivity());
@@ -117,12 +133,12 @@ public class ListFragment extends Fragment {
 
 
         ContentValues values = new ContentValues();
-        values.put(DatabaseManagement.Students.COLUMN_NAME_STUDENT_NAMES, name);
-        values.put(DatabaseManagement.Students.COLUMN_NAME_FIRST_LASTNAME, firstLastname);
-        values.put(DatabaseManagement.Students.COLUMN_NAME_SECOND_LASTNAME, secondLastname);
+        values.put(DatabaseManagement.Students.COLUMN_NAME_STUDENT_NAMES, student.getNames());
+        values.put(DatabaseManagement.Students.COLUMN_NAME_FIRST_LASTNAME, student.getFirstLastname());
+        values.put(DatabaseManagement.Students.COLUMN_NAME_SECOND_LASTNAME, student.getSecondLastname());
+        values.put(DatabaseManagement.Students.COLUMN_ID_CLOUD, student.getIdCloud());
 
-        long newRowId;
-        newRowId = db.insert(
+        db.insert(
                 DatabaseManagement.Students.TABLE_NAME,
                 null,
                 values);
@@ -136,11 +152,8 @@ public class ListFragment extends Fragment {
             mDbHelper = DatabaseManagement.Students.StudentsDbHelper.getInstance(getActivity());
         }
 
-
-
         SQLiteDatabase db = mDbHelper.getReadableDatabase();
-
-
+        //mDbHelper.onUpgrade(db, 1, 2);
         Cursor c = db.query(DatabaseManagement.Students.TABLE_NAME,
                             null,
                             null,
@@ -149,7 +162,7 @@ public class ListFragment extends Fragment {
                             null,
                             DatabaseManagement.Students.COLUMN_NAME_FIRST_LASTNAME +" ASC", null);
 
-        ArrayList<String> students = new ArrayList<String>();
+        ArrayList<Student> studentsInDb = new ArrayList<Student>();
 
         c.moveToFirst();
 
@@ -161,11 +174,12 @@ public class ListFragment extends Fragment {
             String names = c.getString(c.getColumnIndexOrThrow(DatabaseManagement.Students.COLUMN_NAME_STUDENT_NAMES)).toUpperCase();
             String firstLast = c.getString(c.getColumnIndexOrThrow(DatabaseManagement.Students.COLUMN_NAME_FIRST_LASTNAME)).toUpperCase();
             String secondLast = c.getString(c.getColumnIndexOrThrow(DatabaseManagement.Students.COLUMN_NAME_SECOND_LASTNAME)).toUpperCase();
-            students.add(firstLast + " " + secondLast + " " + names);
+            int idCloud = c.getInt(c.getColumnIndexOrThrow(DatabaseManagement.Students.COLUMN_ID_CLOUD));
+            studentsInDb.add(new Student(names, firstLast, secondLast, idCloud));
         }
 
-        if (students.size()>0){
-            nombres = students.toArray(new String[students.size()]);
+        if (studentsInDb.size()>0){
+            students = studentsInDb;
             generateIndexedItemArray();
             return true;
         }
@@ -180,22 +194,20 @@ public class ListFragment extends Fragment {
 
         ArrayList<Item> items = new ArrayList<Item>();
 
-        char last = nombres[0].charAt(0);
+        char last = students.get(0).getFirstLastname().charAt(0);
+
         items.add(new Item(last+"", 0));
 
+        for (int i=0; i<students.size(); i++){
+            Student s = students.get(i);
+            if (last != s.getFirstLastname().charAt(0)){
 
-        for (int i=0; i<nombres.length; i++){
-
-            if (last != nombres[i].charAt(0)){
-
-                last = nombres[i].charAt(0);
+                last = s.getFirstLastname().charAt(0);
                 Item item = new Item(last+"", 0);
                 items.add(item);
 
             }
-            String[] nombreDesordenado = nombres[i].split(" ");
-            String nombreOrdenado = nombreOrdenado(nombreDesordenado);
-            items.add(new Item(nombreOrdenado,1));
+            items.add(new Item(s.getNames() + " " + s.getFirstLastname() + " " + s.getSecondLastname() + " ", 1));
         }
 
         indexedItemArray = items;
@@ -208,59 +220,37 @@ public class ListFragment extends Fragment {
     // Generate indexed Array and add the students to the database. Only use when there is no data in the database.
     private void generateIndexedItemArray(String archivo){
         if (archivo.length() ==0 || archivo == null) return;
-        nombres = archivo.split("\n");
+        nombres = new ArrayList<String>(Arrays.asList(archivo.split("\n")));
+        students = stringArrayToStudentArray(nombres, students);
+
         ArrayList<Item> items = new ArrayList<Item>();
 
-        char last = nombres[0].charAt(0);
+        char last = students.get(0).getFirstLastname().charAt(0);
         Item firstLetter = new Item(last + "", 0);
         items.add(firstLetter);
 
+        for (int i=0; i<students.size(); i++){
+            Student s = students.get(i);
 
-        for (int i=0; i<nombres.length; i++){
+            if (last != s.getFirstLastname().charAt(0)){
 
-            if (last != nombres[i].charAt(0)){
-                nombres[i] = nombres[i].toUpperCase();
-                last = nombres[i].charAt(0);
+                s.setNames(s.getNames().toUpperCase());
+                s.setFirstLastname(s.getFirstLastname().toUpperCase());
+                s.setSecondLastname(s.getSecondLastname().toUpperCase());
+
+                last = s.getFirstLastname().charAt(0);
                 Item item = new Item(last+"", 0);
                 items.add(item);
             }
-            String[] nombreDesordenado = nombres[i].split(" ");
-            String nombreOrdenado = nombreOrdenado(nombreDesordenado);
-            items.add(new Item(nombreOrdenado,1));
-            String[] a = nombreOrdenado.split(" ");
-            if (a.length == 4) addStudentToDb(a[0] + " " + a[1], a[2], a[3]);
-            else if (a.length == 3) addStudentToDb(a[0], a[1], a[2]);
-            else if (a.length == 2) addStudentToDb(a[0] , a[1], "");
-            else addStudentToDb(a[a.length-1] , "", "");
+
+            items.add(new Item(s.getNames() + " " + s.getFirstLastname() + " " + s.getSecondLastname(),1));
+            addStudentToDb(s);
         }
 
         indexedItemArray = items;
         adaptador.addAll(items);
         adaptador.notifyDataSetChanged();
 
-    }
-
-    private String nombreOrdenado(String[] nombreDesordenado){
-        String nombreOrdenado ="";
-        if (nombreDesordenado.length==3){
-            String apellido1= nombreDesordenado[0];
-            String apellido2= nombreDesordenado[1];
-            String nombre = nombreDesordenado[2];
-            nombreOrdenado = nombre+" "+apellido1 + " "+ apellido2;
-        }
-        else if (nombreDesordenado.length==4){
-            String apellido1= nombreDesordenado[0];
-            String apellido2= nombreDesordenado[1];
-            String nombre1 = nombreDesordenado[2];
-            String nombre2 = nombreDesordenado[3];
-            nombreOrdenado = nombre1+" "+nombre2 +" "+apellido1 + " "+ apellido2;
-        }
-        else{
-            for (int i = 0; i<nombreDesordenado.length; i++){
-                nombreOrdenado += nombreDesordenado[i] + " ";
-            }
-        }
-        return nombreOrdenado;
     }
 
     @Override
@@ -274,40 +264,74 @@ public class ListFragment extends Fragment {
         }
     }
 
-    public ArrayList<String> cloudToPhone(JSONArray jsonArray) throws JSONException {
-        ArrayList<String> arrayList = new ArrayList<String>();
+    public ArrayList<Student> fillPhoneDbWithCloudDb(JSONArray jsonArray) throws JSONException {
+        ArrayList<Student> arrayList = new ArrayList<Student>();
+        idCloudFromPhone = idCloudFromPhone();
+
         for (int i=0; i<jsonArray.length(); i++){
-            JSONObject student = jsonArray.getJSONObject(i);
-            String name = student.getString("name");
-            String firstLastname = student.getString("first_lastname");
-            String secondLastname = student.getString("second_lastname");
-            arrayList.add(firstLastname+" "+secondLastname + " " + name);
-            if (!Arrays.asList(nombres).contains(firstLastname+" "+secondLastname + " " + name)){
-                addStudent(name, firstLastname, secondLastname);
+
+            JSONObject studentJSON = jsonArray.getJSONObject(i);
+
+            String name = studentJSON.getString("name");
+            String firstLastname = studentJSON.getString("first_lastname");
+            String secondLastname = studentJSON.getString("second_lastname");
+            int idCloud = studentJSON.getInt("id");
+            Student student = new Student(name, firstLastname, secondLastname, idCloud);
+            arrayList.add(student);
+
+            if (!idCloudFromPhone.contains(idCloud)){
+                student.setIdCloud(idCloud);
+                addStudent(student);
+                idCloudFromPhone.add(idCloud);
             }
         }
         return arrayList;
     }
 
-    public void phoneToCloud(ArrayList<String> array) throws JSONException {
+    public ArrayList idCloudFromPhone() {
+        ArrayList list = new ArrayList();
+        for (int i=0; i<students.size(); i++) {
+            list.add(students.get(i).getIdCloud());
+        }
+        return list;
+     }
 
-        ArrayList<String> studentsNotInCloud = new ArrayList<String>();
-        for (int i=0; i<nombres.length; i++){
-            if (!Arrays.asList(array).contains(nombres[i])){
-                studentsNotInCloud.add(nombres[i]);
+    public void phoneToCloud(ArrayList<Student> studentsInCloud) throws JSONException {
+        ArrayList<Student> studentsNotInCloud = new ArrayList<Student>();
+        for (int i=0; i<students.size(); i++){
+            if (!idCloudFromPhone.contains(students.get(i).getIdCloud())){
+                studentsNotInCloud.add(students.get(i));
             }
         }
+
         mListener.onAddStudentsToCloud(studentsNotInCloud);
 
     }
 
     public void mergeWithCloud(JSONArray jsonArray) throws JSONException {
-        ArrayList<String> studentsInCloud = cloudToPhone(jsonArray);
+        ArrayList<Student> studentsInCloud = fillPhoneDbWithCloudDb(jsonArray);
         phoneToCloud(studentsInCloud);
 
     }
 
-    @Override
+
+    public void upgradeStudent(Student student) {
+
+        SQLiteDatabase db = mDbHelper.getWritableDatabase();
+
+        db.rawQuery("UPGRADE " + DatabaseManagement.Students.TABLE_NAME + " SET " +
+                DatabaseManagement.Students.COLUMN_ID_CLOUD + "=" + student.getIdCloud() +
+                " " + DatabaseManagement.Students.COLUMN_NAME_STUDENT_NAMES + "=" + student.getNames() +
+                " " + DatabaseManagement.Students.COLUMN_NAME_FIRST_LASTNAME + "=" + student.getFirstLastname() +
+                " " + DatabaseManagement.Students.COLUMN_NAME_SECOND_LASTNAME + "=" + student.getSecondLastname()
+                , null);
+
+    }
+
+
+
+
+        @Override
     public void onDetach() {
         super.onDetach();
         mListener = null;
@@ -316,7 +340,8 @@ public class ListFragment extends Fragment {
 
     public interface OnFragmentInteractionListener {
         public void onFragmentInteractionList(Item item);
-        public void onAddStudentsToCloud(ArrayList<String> students);
+        public void onAddStudentsToCloud(ArrayList<Student> students);
+        public void onGetStudentsFromCloud();
     }
 
 

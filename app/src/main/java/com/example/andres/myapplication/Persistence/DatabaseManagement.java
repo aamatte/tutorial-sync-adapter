@@ -18,9 +18,11 @@ public final class DatabaseManagement {
         public static final String COLUMN_NAME_STUDENT_NAMES = "names";
         public static final String COLUMN_NAME_FIRST_LASTNAME = "firstlastname";
         public static final String COLUMN_NAME_SECOND_LASTNAME = "secondlastname";
+        public static final String COLUMN_ID_CLOUD = "idcloud";
 
 
         public static final String TEXT_TYPE = " TEXT";
+        public static final String INTEGER_TYPE = " INTEGER";
         public static final String COMMA_SEP = ",";
 
 
@@ -29,7 +31,8 @@ public final class DatabaseManagement {
                         Students._ID + " INTEGER PRIMARY KEY," +
                         Students.COLUMN_NAME_STUDENT_NAMES + TEXT_TYPE + COMMA_SEP +
                         Students.COLUMN_NAME_FIRST_LASTNAME + TEXT_TYPE + COMMA_SEP +
-                        Students.COLUMN_NAME_SECOND_LASTNAME + TEXT_TYPE +
+                        Students.COLUMN_NAME_SECOND_LASTNAME + TEXT_TYPE + COMMA_SEP+
+                        Students.COLUMN_ID_CLOUD + INTEGER_TYPE +
                         " )";
 
         private static final String SQL_DELETE_STUDENTS =
@@ -41,7 +44,7 @@ public final class DatabaseManagement {
 
         public static class StudentsDbHelper extends SQLiteOpenHelper {
 
-            public static final int DATABASE_VERSION = 1;
+            public static final int DATABASE_VERSION = 2;
             public static final String DATABASE_NAME = "Students.db";
 
             private static StudentsDbHelper sInstance;
