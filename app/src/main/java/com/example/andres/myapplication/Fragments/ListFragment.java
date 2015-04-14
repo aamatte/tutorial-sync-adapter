@@ -151,13 +151,14 @@ public class ListFragment extends Fragment {
     }
 
     private boolean selectStudentsFromDb(){
+        students = new ArrayList<Student>();
 
         if (mDbHelper == null) {
             mDbHelper = DatabaseManagement.Students.StudentsDbHelper.getInstance(getActivity());
         }
 
         SQLiteDatabase db = mDbHelper.getReadableDatabase();
-        //mDbHelper.onUpgrade(db, 1, 2);
+        mDbHelper.onUpgrade(db, 1, 2);
         Cursor c = db.query(DatabaseManagement.Students.TABLE_NAME,
                             null,
                             null,
@@ -272,6 +273,8 @@ public class ListFragment extends Fragment {
     public ArrayList<Student> fillPhoneDbWithCloudDb(JSONArray jsonArray) throws JSONException {
         ArrayList<Student> arrayList = new ArrayList<Student>();
         idCloudFromPhone = idCloudFromPhone();
+        SQLiteDatabase dbw = mDbHelper.getWritableDatabase();
+        SQLiteDatabase dbr = mDbHelper.getReadableDatabase();
 
         for (int i=0; i<jsonArray.length(); i++){
 
@@ -289,9 +292,52 @@ public class ListFragment extends Fragment {
                 addStudent(student);
                 idCloudFromPhone.add(idCloud);
             }
+            // CHECK IF VALUE OF THE STUDENT IS THE SAME IN CLOUD AND PHONE
+            else{
+                //TODO: query para obtener student con esa idCloud, comparar valores y actualizar de ser necesario
+                upgradeStudentNames(dbr, dbw, student);
+            }
         }
+        selectStudentsFromDb();
         return arrayList;
     }
+
+    public void upgradeStudentNames(SQLiteDatabase dbr, SQLiteDatabase dbw, Student s){
+
+        String where = DatabaseManagement.Students.COLUMN_ID_CLOUD + "=?";
+        String[] whereArgs = new String[] {s.getIdCloud() +""};
+        Cursor c = dbr.query(DatabaseManagement.Students.TABLE_NAME,
+                null,
+                where,
+                whereArgs,
+                null,
+                null,
+                DatabaseManagement.Students.COLUMN_NAME_FIRST_LASTNAME +" ASC", null);
+
+        c.moveToFirst();
+
+        String ns = c.getString(c.getColumnIndexOrThrow(DatabaseManagement.Students.COLUMN_NAME_STUDENT_NAMES));
+        String fln = c.getString(c.getColumnIndexOrThrow(DatabaseManagement.Students.COLUMN_NAME_FIRST_LASTNAME));
+        String sln = c.getString(c.getColumnIndexOrThrow(DatabaseManagement.Students.COLUMN_NAME_SECOND_LASTNAME));
+
+        ContentValues values = new ContentValues();
+
+        if (!ns.equals(s.getNames())){
+            values.put(DatabaseManagement.Students.COLUMN_NAME_STUDENT_NAMES, s.getNames());
+        }
+        if (!fln.equals(s.getFirstLastname())){
+            values.put(DatabaseManagement.Students.COLUMN_NAME_FIRST_LASTNAME, s.getFirstLastname());
+        }
+        if (!sln.equals(s.getSecondLastname())){
+            values.put(DatabaseManagement.Students.COLUMN_NAME_SECOND_LASTNAME, s.getSecondLastname());
+        }
+
+        dbw.update(DatabaseManagement.Students.TABLE_NAME, values,  DatabaseManagement.Students.COLUMN_ID_CLOUD + " = ?",
+                new String[]{s.getIdCloud()+""});
+
+
+    }
+
 
     public ArrayList idCloudFromPhone() {
         ArrayList list = new ArrayList();
@@ -321,7 +367,7 @@ public class ListFragment extends Fragment {
 
 
 
-    public void upgradeStudent(Student student) {
+    public void upgradeStudentIdCloud(Student student) {
 
         SQLiteDatabase db = mDbHelper.getWritableDatabase();
 
@@ -342,13 +388,6 @@ public class ListFragment extends Fragment {
                 student1.setIdCloud(student.getIdCloud());
             }
         }
-  /*      db.rawQuery("UPDATE " + DatabaseManagement.Students.TABLE_NAME + " SET " +
-                DatabaseManagement.Students.COLUMN_ID_CLOUD + "=" + student.getIdCloud() +
-                " WHERE " + DatabaseManagement.Students.COLUMN_NAME_STUDENT_NAMES + "='" + student.getNames() +
-                "' AND " + DatabaseManagement.Students.COLUMN_NAME_FIRST_LASTNAME + "='" + student.getFirstLastname() +
-                "' AND " + DatabaseManagement.Students.COLUMN_NAME_SECOND_LASTNAME + "='" + student.getSecondLastname() +"'"
-                , null);*/
-
     }
 
 

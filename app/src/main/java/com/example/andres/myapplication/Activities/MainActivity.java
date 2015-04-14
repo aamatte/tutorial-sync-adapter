@@ -166,7 +166,7 @@ public class MainActivity extends ActionBarActivity implements ListFragment.OnFr
         ListFragment listFrag = (ListFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.fragment_list);
 
-        listFrag.upgradeStudent(student);
+        listFrag.upgradeStudentIdCloud(student);
 
     }
 
