@@ -116,7 +116,7 @@ public class ListFragment extends Fragment {
     }
 
     public void addStudent(Student student){
-
+        if (!studentInDb(student)) return;
         addStudentToIndexedArray(student);
         addStudentToDb(student);
     }
@@ -127,6 +127,7 @@ public class ListFragment extends Fragment {
     }
 
     private void addStudentToDb(Student student){
+
 
         if (mDbHelper == null) {
             mDbHelper = DatabaseManagement.Students.StudentsDbHelper.getInstance(getActivity());
@@ -142,7 +143,7 @@ public class ListFragment extends Fragment {
         values.put(DatabaseManagement.Students.COLUMN_NAME_SECOND_LASTNAME, student.getSecondLastname());
         values.put(DatabaseManagement.Students.COLUMN_ID_CLOUD, student.getIdCloud());
 
-        db.insert(
+        db.insertOrThrow(
                 DatabaseManagement.Students.TABLE_NAME,
                 null,
                 values);
@@ -158,7 +159,7 @@ public class ListFragment extends Fragment {
         }
 
         SQLiteDatabase db = mDbHelper.getReadableDatabase();
-        mDbHelper.onUpgrade(db, 1, 2);
+        //mDbHelper.onUpgrade(db, 1, 2);
         Cursor c = db.query(DatabaseManagement.Students.TABLE_NAME,
                             null,
                             null,
@@ -294,7 +295,6 @@ public class ListFragment extends Fragment {
             }
             // CHECK IF VALUE OF THE STUDENT IS THE SAME IN CLOUD AND PHONE
             else{
-                //TODO: query para obtener student con esa idCloud, comparar valores y actualizar de ser necesario
                 upgradeStudentNames(dbr, dbw, student);
             }
         }
@@ -302,7 +302,21 @@ public class ListFragment extends Fragment {
         return arrayList;
     }
 
+    public boolean studentInDb(Student s){
+        for (int i=0; i<students.size(); i++){
+            if (students.get(i).getNames().equals(s.getNames()) &&
+                    students.get(i).getFirstLastname().equals(s.getFirstLastname())&&
+                    students.get(i).getSecondLastname().equals(s.getSecondLastname())){
+                return false;
+            }
+        }
+        return true;
+    }
+
     public void upgradeStudentNames(SQLiteDatabase dbr, SQLiteDatabase dbw, Student s){
+
+        if (!studentInDb(s)) return;
+
 
         String where = DatabaseManagement.Students.COLUMN_ID_CLOUD + "=?";
         String[] whereArgs = new String[] {s.getIdCloud() +""};
@@ -315,6 +329,8 @@ public class ListFragment extends Fragment {
                 DatabaseManagement.Students.COLUMN_NAME_FIRST_LASTNAME +" ASC", null);
 
         c.moveToFirst();
+
+
 
         String ns = c.getString(c.getColumnIndexOrThrow(DatabaseManagement.Students.COLUMN_NAME_STUDENT_NAMES));
         String fln = c.getString(c.getColumnIndexOrThrow(DatabaseManagement.Students.COLUMN_NAME_FIRST_LASTNAME));
@@ -332,8 +348,10 @@ public class ListFragment extends Fragment {
             values.put(DatabaseManagement.Students.COLUMN_NAME_SECOND_LASTNAME, s.getSecondLastname());
         }
 
-        dbw.update(DatabaseManagement.Students.TABLE_NAME, values,  DatabaseManagement.Students.COLUMN_ID_CLOUD + " = ?",
-                new String[]{s.getIdCloud()+""});
+        if (values.size()!=0) {
+            dbw.update(DatabaseManagement.Students.TABLE_NAME, values, DatabaseManagement.Students.COLUMN_ID_CLOUD + " = ?",
+                    new String[]{s.getIdCloud() + ""});
+        }
 
 
     }

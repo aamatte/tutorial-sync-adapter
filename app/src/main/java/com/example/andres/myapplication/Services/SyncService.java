@@ -90,7 +90,7 @@ public class SyncService extends Service {
 
 
         if (modo.compareTo("POST")==0){
-
+            if (responses == null) return;
             for (int i=0; i<responses.size(); i++) {
                 JSONObject jsonArray = new JSONObject(responses.get(i).toString());
                 int idCloud = jsonArray.getInt("id");
@@ -267,14 +267,17 @@ public class SyncService extends Service {
 
                         int responsecode = urlConnection.getResponseCode();
 
-                        BufferedReader br = new BufferedReader(new InputStreamReader((urlConnection.getInputStream())));
-                        String output= "";
-                        String a;
-                        while ((a = br.readLine()) != null) {
-                            output += a;
+                        if (responsecode==201){
+                            BufferedReader br = new BufferedReader(new InputStreamReader((urlConnection.getInputStream())));
+                            String output= "";
+                            String a;
+                            while ((a = br.readLine()) != null) {
+                                output += a;
+                            }
+
+                            responses.add(output);
                         }
 
-                        responses.add(output);
 
 
                     }
