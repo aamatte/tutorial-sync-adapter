@@ -30,6 +30,8 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.Comparator;
 
 
 public class ListFragment extends Fragment {
@@ -109,10 +111,12 @@ public class ListFragment extends Fragment {
     }
 
 
+    public ArrayList<Student> getStudents(){
+        return students;
+    }
 
     public void addStudent(Student student){
 
-        // TODO: Agregar columna idCloud a tabla y adaptar metodos para eso
         addStudentToIndexedArray(student);
         addStudentToDb(student);
     }
@@ -194,6 +198,8 @@ public class ListFragment extends Fragment {
 
         ArrayList<Item> items = new ArrayList<Item>();
 
+        Collections.sort(students, new CustomComparator());
+
         char last = students.get(0).getFirstLastname().charAt(0);
 
         items.add(new Item(last+"", 0));
@@ -205,7 +211,6 @@ public class ListFragment extends Fragment {
                 last = s.getFirstLastname().charAt(0);
                 Item item = new Item(last+"", 0);
                 items.add(item);
-
             }
             items.add(new Item(s.getNames() + " " + s.getFirstLastname() + " " + s.getSecondLastname() + " ", 1));
         }
@@ -315,16 +320,34 @@ public class ListFragment extends Fragment {
     }
 
 
+
     public void upgradeStudent(Student student) {
 
         SQLiteDatabase db = mDbHelper.getWritableDatabase();
 
-        db.rawQuery("UPGRADE " + DatabaseManagement.Students.TABLE_NAME + " SET " +
+        ContentValues values = new ContentValues();
+        values.put(DatabaseManagement.Students.COLUMN_ID_CLOUD, student.getIdCloud());
+
+        db.update(DatabaseManagement.Students.TABLE_NAME, values,  DatabaseManagement.Students.COLUMN_NAME_STUDENT_NAMES + " = ? AND "
+                        + DatabaseManagement.Students.COLUMN_NAME_FIRST_LASTNAME + " = ? AND " +
+                        DatabaseManagement.Students.COLUMN_NAME_SECOND_LASTNAME + " = ?",
+                        new String[]{student.getNames(), student.getFirstLastname(), student.getSecondLastname()});
+
+        for (int i=0; i<students.size(); i++){
+            Student student1 = students.get(i);
+            if (student.getNames().equals(student1.getNames()) &&
+                student.getFirstLastname().equals(student1.getFirstLastname()) &&
+                student.getSecondLastname().equals(student1.getSecondLastname()))
+            {
+                student1.setIdCloud(student.getIdCloud());
+            }
+        }
+  /*      db.rawQuery("UPDATE " + DatabaseManagement.Students.TABLE_NAME + " SET " +
                 DatabaseManagement.Students.COLUMN_ID_CLOUD + "=" + student.getIdCloud() +
-                " " + DatabaseManagement.Students.COLUMN_NAME_STUDENT_NAMES + "=" + student.getNames() +
-                " " + DatabaseManagement.Students.COLUMN_NAME_FIRST_LASTNAME + "=" + student.getFirstLastname() +
-                " " + DatabaseManagement.Students.COLUMN_NAME_SECOND_LASTNAME + "=" + student.getSecondLastname()
-                , null);
+                " WHERE " + DatabaseManagement.Students.COLUMN_NAME_STUDENT_NAMES + "='" + student.getNames() +
+                "' AND " + DatabaseManagement.Students.COLUMN_NAME_FIRST_LASTNAME + "='" + student.getFirstLastname() +
+                "' AND " + DatabaseManagement.Students.COLUMN_NAME_SECOND_LASTNAME + "='" + student.getSecondLastname() +"'"
+                , null);*/
 
     }
 
@@ -345,7 +368,12 @@ public class ListFragment extends Fragment {
     }
 
 
-
+    public class CustomComparator implements Comparator<Student> {
+        @Override
+        public int compare(Student o1, Student o2) {
+            return o1.getFirstLastname().compareTo(o2.getFirstLastname());
+        }
+    }
 
     private class DownloadFileTask extends AsyncTask<String, Void, String>{
 

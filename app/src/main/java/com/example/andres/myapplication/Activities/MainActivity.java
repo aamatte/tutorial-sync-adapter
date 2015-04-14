@@ -25,6 +25,7 @@ import com.example.andres.myapplication.Services.SyncService;
 
 import org.json.JSONArray;
 import org.json.JSONException;
+import org.json.JSONObject;
 
 import java.util.ArrayList;
 
@@ -149,7 +150,11 @@ public class MainActivity extends ActionBarActivity implements ListFragment.OnFr
 
         else if (id == R.id.sync_students_button){
 
-            syncWithCloud();
+            try {
+                syncWithCloud();
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
 
         }
 
@@ -165,11 +170,38 @@ public class MainActivity extends ActionBarActivity implements ListFragment.OnFr
 
     }
 
-    private void syncWithCloud() {
+    private JSONArray fromStudentsToJson() throws JSONException {
+        ListFragment listFrag = (ListFragment)
+                getSupportFragmentManager().findFragmentById(R.id.fragment_list);
+
+        ArrayList<Student> students = listFrag.getStudents();
+
+        JSONArray jsonArray = new JSONArray();
+
+        for (int i=0; i<students.size(); i++){
+            if (students.get(i).getIdCloud() == 0){
+                Student s = students.get(i);
+
+                JSONObject jsonObject = new JSONObject();
+                jsonObject.put("name", s.getNames());
+                jsonObject.put("first_lastname", s.getFirstLastname());
+                jsonObject.put("second_lastname", s.getSecondLastname());
+                jsonArray.put(jsonObject);
+            }
+        }
+        return jsonArray;
+
+    }
+
+
+    private void syncWithCloud() throws JSONException {
         if (mBound){
 
             try {
+                Bundle bundle = new Bundle();
+                bundle.putString("jsonstring", fromStudentsToJson().toString());
                 Message msg = Message.obtain(null, SyncService.SYNC_REQUESTED);
+                msg.setData(bundle);
                 mServiceMessenger.send(msg);
             }
             catch (RemoteException e) {
@@ -206,7 +238,11 @@ public class MainActivity extends ActionBarActivity implements ListFragment.OnFr
 
     @Override
     public void onGetStudentsFromCloud() {
-         syncWithCloud();
+        try {
+            syncWithCloud();
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
 
     }
 

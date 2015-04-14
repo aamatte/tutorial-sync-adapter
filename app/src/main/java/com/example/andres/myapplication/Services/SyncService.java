@@ -11,12 +11,12 @@ import android.os.Message;
 import android.os.Messenger;
 import android.os.RemoteException;
 
-import com.example.andres.myapplication.Model.Student;
-
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.BufferedReader;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
@@ -31,6 +31,8 @@ public class SyncService extends Service {
     public static final int MSG_REGISTER_CLIENT = 2;
     public static final int SYNC_REQUESTED = 3;
     public static final int UPGRADE_STUDENT = 4;
+
+    String jsonStringStudents;
 
     private final IBinder mBinder = new LocalBinder();
     Messenger client;
@@ -79,8 +81,8 @@ public class SyncService extends Service {
     /**
      * Add student to the web app DB if not added
      */
-    public void addStudents(ArrayList<Student> students){
-        (new RequestTask("POST", students)).execute("http://radiant-savannah-9544.herokuapp.com/students.json");
+    public void addStudents(){
+        (new RequestTask("POST", jsonStringStudents)).execute("http://radiant-savannah-9544.herokuapp.com/students.json");
 
     }
 
@@ -90,11 +92,11 @@ public class SyncService extends Service {
         if (modo.compareTo("POST")==0){
 
             for (int i=0; i<responses.size(); i++) {
-                JSONObject jsonArray = new JSONObject(responses.get(i));
+                JSONObject jsonArray = new JSONObject(responses.get(i).toString());
                 int idCloud = jsonArray.getInt("id");
-                String names = jsonArray.getString("names");
+                String names = jsonArray.getString("name");
                 String fln = jsonArray.getString("first_lastname");
-                String sln = jsonArray.getString("second_lastanem");
+                String sln = jsonArray.getString("second_lastname");
 
                 upgradeStudent(names, fln, sln, idCloud);
             }
@@ -118,7 +120,9 @@ public class SyncService extends Service {
                     break;
                 case SYNC_REQUESTED:
                     try {
+                        jsonStringStudents = msg.getData().getString("jsonstring");
                         syncStudents();
+
                     } catch (JSONException e) {
                         e.printStackTrace();
                     } catch (ExecutionException e) {
@@ -175,11 +179,11 @@ public class SyncService extends Service {
 
     private class RequestTask extends AsyncTask<String, Void, ArrayList<String>> {
         private String modo;
-        ArrayList<Student> students;
+        String students;
         ArrayList<String> responses;
 
 
-        public RequestTask(String modo, ArrayList<Student> students){
+        public RequestTask(String modo, String students){
             this.modo = modo;
             this.students = students;
         }
@@ -187,7 +191,11 @@ public class SyncService extends Service {
 
         @Override
         protected ArrayList<String> doInBackground(String... params) {
-            responses = performRequest(params[0]);
+            try {
+                responses = performRequest(params[0]);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
             return responses;
         }
 
@@ -195,13 +203,16 @@ public class SyncService extends Service {
         protected void onPostExecute(ArrayList<String> result) {
             super.onPostExecute(result);
             try {
+                if (modo.equals("GET")){
+                    addStudents();
+                }
                 processJsonResponse(result, modo);
             } catch (JSONException e) {
                 e.printStackTrace();
             }
         }
 
-        public ArrayList<String> performRequest(String urlString) {
+        public ArrayList<String> performRequest(String urlString) throws IOException {
 
             URL url;
             HttpURLConnection urlConnection = null;
@@ -239,7 +250,10 @@ public class SyncService extends Service {
                     return responses;
                 }
                 else if (modo.compareTo("POST") == 0){
-                    for (int i = 0; i< students.size(); i++){
+                    JSONArray jsonArray = new JSONArray(students);
+
+                    for (int i = 0; i< jsonArray.length(); i++){
+                        JSONObject object = jsonArray.getJSONObject(i);
                         urlConnection = (HttpURLConnection) url.openConnection();
                         urlConnection.setDoOutput(true);
                         urlConnection.setDoInput(true);
@@ -247,19 +261,21 @@ public class SyncService extends Service {
                         urlConnection.setRequestProperty("Accept", "application/json");
                         urlConnection.setRequestMethod("POST");
 
-                        JSONObject studentJSON = new JSONObject();
-                        Student s = students.get(i);
-                        studentJSON.put("name", s.getNames());
-                        studentJSON.put("first_lastname", s.getFirstLastname());
-                        studentJSON.put("second_lastname", s.getSecondLastname());
-
                         OutputStreamWriter wr= new OutputStreamWriter(urlConnection.getOutputStream());
-                        wr.write(studentJSON.toString());
+                        wr.write(object.toString());
                         wr.flush();
 
-                        int responseCode = urlConnection.getResponseCode();
-                        String responseBody =urlConnection.getResponseMessage();
-                        responses.add(responseBody);
+                        int responsecode = urlConnection.getResponseCode();
+
+                        BufferedReader br = new BufferedReader(new InputStreamReader((urlConnection.getInputStream())));
+                        String output= "";
+                        String a;
+                        while ((a = br.readLine()) != null) {
+                            output += a;
+                        }
+
+                        responses.add(output);
+
 
                     }
                     return responses;
