@@ -1,7 +1,10 @@
 package com.example.andres.myapplication.Services;
 
 import android.app.Service;
+import android.content.Context;
 import android.content.Intent;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.os.AsyncTask;
 import android.os.Binder;
 import android.os.Bundle;
@@ -10,6 +13,7 @@ import android.os.IBinder;
 import android.os.Message;
 import android.os.Messenger;
 import android.os.RemoteException;
+import android.widget.Toast;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -22,6 +26,7 @@ import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.concurrent.ExecutionException;
 
@@ -103,9 +108,14 @@ public class SyncService extends Service {
 
         }
         else{
-            String response = responses.get(0);
-            // mandar response a activity y luego a fragment
-            sendStudentsToUI(response);
+            if (responses.size()>0){
+                String response = responses.get(0);
+                // mandar response a activity y luego a fragment
+                sendStudentsToUI(response);
+            }
+            else Toast.makeText(getApplicationContext(), "No internet connection", Toast.LENGTH_SHORT).show();
+
+
         }
     }
     /**
@@ -137,6 +147,14 @@ public class SyncService extends Service {
             }
         }
     }
+
+    private boolean isNetworkAvailable() {
+        ConnectivityManager connectivityManager
+                = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
+        NetworkInfo activeNetworkInfo = connectivityManager.getActiveNetworkInfo();
+        return activeNetworkInfo != null && activeNetworkInfo.isConnected();
+    }
+
 
     private void sendStudentsToUI(String students) {
             try {
@@ -217,7 +235,9 @@ public class SyncService extends Service {
             URL url;
             HttpURLConnection urlConnection = null;
             ArrayList<String> responses = new ArrayList<String>();
-
+            if (!isNetworkAvailable()){
+                return responses;
+            }
             try {
                 url = new URL(urlString);
 
@@ -227,11 +247,14 @@ public class SyncService extends Service {
                     urlConnection = (HttpURLConnection) url.openConnection();
                     urlConnection.setRequestMethod("GET");
 
+                    InputStream is;
+
                     int responseCode = urlConnection.getResponseCode();
 
-                    InputStream is = urlConnection.getInputStream();
+                    is = urlConnection.getInputStream();
 
                     InputStreamReader isr = new InputStreamReader(is);
+
 
                     BufferedReader reader = new BufferedReader(isr);
 
@@ -239,14 +262,15 @@ public class SyncService extends Service {
 
                     String line;
 
-                    while ((line = reader.readLine()) != null) {
-                        response += line + "\n";
-                    }
 
+                    while ((line = reader.readLine()) != null) {
+                            response += line + "\n";
+                    }
                     reader.close();
                     urlConnection.disconnect();
 
                     responses.add(response);
+
                     return responses;
                 }
                 else if (modo.compareTo("POST") == 0){
@@ -254,6 +278,7 @@ public class SyncService extends Service {
 
                     for (int i = 0; i< jsonArray.length(); i++){
                         JSONObject object = jsonArray.getJSONObject(i);
+
                         urlConnection = (HttpURLConnection) url.openConnection();
                         urlConnection.setDoOutput(true);
                         urlConnection.setDoInput(true);
@@ -284,14 +309,21 @@ public class SyncService extends Service {
                     return responses;
                 }
 
-            } catch (Exception e) {
-                e.printStackTrace();
+            }
+
+             catch (UnknownHostException e) {
+
+                Toast.makeText(getApplicationContext(), "No internet connection", Toast.LENGTH_SHORT).show();
+
+            } catch (Exception ex) {
+
+                Toast.makeText(getApplicationContext(), "Error", Toast.LENGTH_SHORT).show();
 
             } finally {
                 if (urlConnection != null)  urlConnection.disconnect();
             }
 
-            return null;
+            return responses;
 
         }
 
