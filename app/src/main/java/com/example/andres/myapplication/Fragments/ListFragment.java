@@ -365,21 +365,9 @@ public class ListFragment extends Fragment {
         return list;
      }
 
-    public void phoneToCloud(ArrayList<Student> studentsInCloud) throws JSONException {
-        ArrayList<Student> studentsNotInCloud = new ArrayList<Student>();
-        for (int i=0; i<students.size(); i++){
-            if (!idCloudFromPhone.contains(students.get(i).getIdCloud())){
-                studentsNotInCloud.add(students.get(i));
-            }
-        }
-
-        mListener.onAddStudentsToCloud(studentsNotInCloud);
-
-    }
 
     public void mergeWithCloud(JSONArray jsonArray) throws JSONException {
         ArrayList<Student> studentsInCloud = fillPhoneDbWithCloudDb(jsonArray);
-        phoneToCloud(studentsInCloud);
 
     }
 
@@ -420,7 +408,6 @@ public class ListFragment extends Fragment {
 
     public interface OnFragmentInteractionListener {
         public void onFragmentInteractionList(Item item);
-        public void onAddStudentsToCloud(ArrayList<Student> students);
         public void onGetStudentsFromCloud();
     }
 

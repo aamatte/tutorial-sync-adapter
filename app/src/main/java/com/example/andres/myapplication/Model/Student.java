@@ -64,5 +64,15 @@ public class Student {
         this.idCloud = idCloud;
     }
 
+    @Override
+    public boolean equals(Object o){
+        Student s = (Student)o;
+        if (s.getFirstLastname().equals(firstLastname) &&
+            s.getSecondLastname().equals(secondLastname) &&
+            s.getNames().equals(names))
+            return true;
+        return false;
+    }
+
 
 }

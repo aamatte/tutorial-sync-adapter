@@ -7,8 +7,5 @@
         android:title="Agregar"
         android:icon ="@drawable/button_action_bar"
         app:showAsAction="always"/>
-    <item android:id="@+id/sync_students_button"
-        android:title="Sincronizar"
-        android:icon ="@drawable/sync_button"
-        app:showAsAction="always"/>
+
 </menu>

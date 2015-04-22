@@ -36,7 +36,12 @@ public class StudentsProvider extends ContentProvider {
     @Override
     public int delete(Uri uri, String selection, String[] selectionArgs) {
         // Implement this to handle requests to delete one or more rows.
-        throw new UnsupportedOperationException("Not yet implemented");
+
+        SQLiteDatabase db = mDbHelper.getWritableDatabase();
+
+        db.delete(DatabaseManagement.Students.TABLE_NAME, null, null);
+
+        return 1;
     }
 
     @Override
@@ -53,12 +58,18 @@ public class StudentsProvider extends ContentProvider {
 
     @Override
     public Uri insert(Uri uri, ContentValues values) {
+
+        SQLiteDatabase db = mDbHelper.getWritableDatabase();
+
+        db.insert(DatabaseManagement.Students.TABLE_NAME, null, values);
         return null;
     }
 
     @Override
     public boolean onCreate() {
         mDbHelper = DatabaseManagement.Students.StudentsDbHelper.getInstance(getContext());
+
+
         return true;
     }
 
@@ -97,4 +108,9 @@ public class StudentsProvider extends ContentProvider {
                       String[] selectionArgs) {
         throw new UnsupportedOperationException("Not yet implemented");
     }
+
+
+
+
+
 }

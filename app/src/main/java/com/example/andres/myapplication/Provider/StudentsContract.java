@@ -27,8 +27,9 @@ public final class StudentsContract {
         public static final String NAMES = "names";
         public static final String FIRST_LASTNAME = "firstlastname";
         public static final String SECOND_LASTNAME = "secondlastname";
+        public static final String ID_CLOUD = "idcloud";
 
-        public static final String[] PROJECTION_ALL = {_ID, NAMES, FIRST_LASTNAME, SECOND_LASTNAME};
+        public static final String[] PROJECTION_ALL = {_ID, NAMES, FIRST_LASTNAME, SECOND_LASTNAME, ID_CLOUD};
 
         public static final String DEFAULT_SORT_ORDER = FIRST_LASTNAME + " ASC";
 

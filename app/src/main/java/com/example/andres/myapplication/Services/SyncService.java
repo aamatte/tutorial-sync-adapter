@@ -6,14 +6,16 @@ import android.content.Intent;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.AsyncTask;
-import android.os.Binder;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.Message;
 import android.os.Messenger;
 import android.os.RemoteException;
+import android.util.Log;
 import android.widget.Toast;
+
+import com.example.andres.myapplication.SyncAdapter.SyncAdapter;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -38,49 +40,60 @@ public class SyncService extends Service {
     public static final int UPGRADE_STUDENT = 4;
 
     String jsonStringStudents;
-
-    private final IBinder mBinder = new LocalBinder();
     Messenger client;
+    // Target we publish for clients to send messages to IncomingHandler.
+    private final Messenger mMessenger = new Messenger(new IncomingMessageHandler());
 
-    private final Messenger mMessenger = new Messenger(new IncomingMessageHandler()); // Target we publish for clients to send messages to IncomingHandler.
+    private static final String TAG = "SyncService";
 
-
-    public SyncService() {
-
-    }
-
-    /**
-     * Clase usada por el cliente Binder.
-     */
-    public class LocalBinder extends Binder {
-        public SyncService getService(){
-            // Returns the SyncService isntance. With this clients can call the public methods.
-            return SyncService.this;
-        }
-    }
-
-
+    private static final Object sSyncAdapterLock = new Object();
+    private static SyncAdapter sSyncAdapter = null;
 
 
 
     @Override
+    public void onCreate() {
+        super.onCreate();
+        Log.i(TAG, "Service created");
+        synchronized (sSyncAdapterLock) {
+            if (sSyncAdapter == null) {
+                sSyncAdapter = new SyncAdapter(getApplicationContext(), true, "");
+            }
+        }
+    }
+
+    @Override
+    /**
+     * Logging-only destructor.
+     */
+    public void onDestroy() {
+        super.onDestroy();
+        Log.i(TAG, "Service destroyed");
+    }
+
+    /**
+     * Return Binder handle for IPC communication with {@link SyncAdapter}.
+     *
+     * <p>New sync requests will be sent directly to the SyncAdapter using this channel.
+     *
+     * @param intent Calling intent
+     * @return Binder handle for {@link SyncAdapter}
+     */
+    @Override
     public IBinder onBind(Intent intent) {
-
-        return mMessenger.getBinder();
+        return sSyncAdapter.getSyncAdapterBinder();
     }
 
 
-    protected void updateDB(){
 
-    }
+
+
 
     /**
      * Get JSON with students from cloud
      */
     public void syncStudents() throws JSONException, ExecutionException, InterruptedException {
-
         (new RequestTask("GET", null)).execute("http://radiant-savannah-9544.herokuapp.com/students.json");
-
     }
 
     /**
@@ -88,16 +101,22 @@ public class SyncService extends Service {
      */
     public void addStudents(){
         (new RequestTask("POST", jsonStringStudents)).execute("http://radiant-savannah-9544.herokuapp.com/students.json");
-
     }
 
+    /*
+        Processes data coming from the cloud, POST or GET, and upgrade the corresponding values calling
+        corresponding methods.
+     */
     protected void processJsonResponse(ArrayList<String> responses, String modo) throws JSONException {
 
-
         if (modo.compareTo("POST")==0){
+
             if (responses == null) return;
+
             for (int i=0; i<responses.size(); i++) {
+
                 JSONObject jsonArray = new JSONObject(responses.get(i).toString());
+
                 int idCloud = jsonArray.getInt("id");
                 String names = jsonArray.getString("name");
                 String fln = jsonArray.getString("first_lastname");
@@ -107,10 +126,14 @@ public class SyncService extends Service {
             }
 
         }
+
         else{
+
             if (responses.size()>0){
+
                 String response = responses.get(0);
-                // mandar response a activity y luego a fragment
+
+                // manda response a activity
                 sendStudentsToUI(response);
             }
             else Toast.makeText(getApplicationContext(), "No internet connection", Toast.LENGTH_SHORT).show();
@@ -118,10 +141,25 @@ public class SyncService extends Service {
 
         }
     }
-    /**
-     * Handle incoming messages from MainActivity
+
+
+    private boolean isNetworkAvailable() {
+        ConnectivityManager connectivityManager
+                = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
+        NetworkInfo activeNetworkInfo = connectivityManager.getActiveNetworkInfo();
+        return activeNetworkInfo != null && activeNetworkInfo.isConnected();
+    }
+
+
+    /* ================================
+     * Communication with MainActivity
+     * ================================
      */
-    private class IncomingMessageHandler extends Handler { // Handler of incoming messages from clients.
+
+    /**
+     * Handle incoming messages from clients (MainActivity)
+     */
+    private class IncomingMessageHandler extends Handler {
         @Override
         public void handleMessage(Message msg) {
             switch (msg.what) {
@@ -148,14 +186,10 @@ public class SyncService extends Service {
         }
     }
 
-    private boolean isNetworkAvailable() {
-        ConnectivityManager connectivityManager
-                = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
-        NetworkInfo activeNetworkInfo = connectivityManager.getActiveNetworkInfo();
-        return activeNetworkInfo != null && activeNetworkInfo.isConnected();
-    }
 
-
+    /*
+        Send all the students of the cloud to the clients using a message
+     */
     private void sendStudentsToUI(String students) {
             try {
 
@@ -172,6 +206,9 @@ public class SyncService extends Service {
             }
     }
 
+    /*
+       Send message to the main activity with the information of the added student, speciffically, idCloud
+     */
     private void upgradeStudent(String names, String fln, String sln, int idCloud){
         try {
 
@@ -194,6 +231,10 @@ public class SyncService extends Service {
     }
 
 
+
+    /*
+        Performs request methods and returns the JSON data to be processed.
+     */
 
     private class RequestTask extends AsyncTask<String, Void, ArrayList<String>> {
         private String modo;
@@ -229,6 +270,13 @@ public class SyncService extends Service {
                 e.printStackTrace();
             }
         }
+
+
+        /*
+            Performs POST or GET request.
+            With GET returns the records in cloud
+            With POST returns the added student to the cloud
+         */
 
         public ArrayList<String> performRequest(String urlString) throws IOException {
 
