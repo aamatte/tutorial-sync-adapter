@@ -10,6 +10,14 @@
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:textAppearance="?android:attr/textAppearanceLarge"
+        android:text="Esta actividad se lanza cuando el authenticator no encuentra una cuenta relacionada a esta aplicación."
+        android:id="@+id/textView6" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="10dp"
         android:textAppearance="?android:attr/textAppearanceMedium"
         android:text="Username"
         android:id="@+id/textView4" />

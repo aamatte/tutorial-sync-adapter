@@ -5,5 +5,5 @@
     android:accountType="com.example.andres.myapplication"
     android:userVisible="true"
     android:allowParallelSyncs="false"
-    android:isAlwaysSyncable="false"
+    android:isAlwaysSyncable="true"
     android:supportsUploading="true"/>

@@ -12,12 +12,6 @@ import com.example.andres.myapplication.Activities.MainActivity;
 import com.example.andres.myapplication.R;
 
 
-/**
- * A simple {@link Fragment} subclass.
- * Activities that contain this fragment must implement the
- * {@link StudentFragment.OnFragmentInteractionListener} interface
- * to handle interaction events.
- */
 public class StudentFragment extends Fragment {
 
     private OnFragmentInteractionListener mListener;

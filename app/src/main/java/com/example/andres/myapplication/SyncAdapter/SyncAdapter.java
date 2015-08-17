@@ -38,21 +38,18 @@ import java.util.ArrayList;
  */
 public class SyncAdapter extends AbstractThreadedSyncAdapter {
 
-    ContentResolver mContentResolver;
-    String students;
-    String token;
-    AccountManager mAccountManager;
+    private ContentResolver mContentResolver;
+    private String token;
+    private AccountManager mAccountManager;
 
-    public static final String url= "https://radiant-savannah-9544.herokuapp.com/api/students";
-
+    public static final String url= "https://guasapuc.herokuapp.com/api/students";
 
 
 
-    public SyncAdapter (Context context, boolean autoInitialize, String students){
+
+    public SyncAdapter (Context context, boolean autoInitialize){
         super(context, autoInitialize);
-        Log.i("SyncAdapter", "SyncAdapter initialized");
         this.mContentResolver = context.getContentResolver();
-        this.students = students;
         mAccountManager = AccountManager.get(context);
 
     }
@@ -62,22 +59,16 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter {
     @Override
     public void onPerformSync(Account account, Bundle extras, String authority, ContentProviderClient provider, SyncResult syncResult) {
 
-
         try {
-            Log.i("SyncAdapter", "Performing sync");
+            // No importa que el thread se bloquee ya que es asincrónico.
             token = mAccountManager.blockingGetAuthToken(account, "normal" , true);
-            ArrayList<String> results = performRequest(url, "GET");
-            Log.i("SyncAdapter", "Result OK");
-            // ejecutado con metodo GET
-            if (results.size() == 1){
-                Log.i("SyncAdapter", "Update data");
 
+            ArrayList<String> results = performRequest(url, "GET");
+
+            if (results.size() == 1){
                 updateData(results, "GET");
             }
-            // ejecutado con POST
-            else{
-
-            }
+        // Manejo de errores
         } catch (IOException e) {
             e.printStackTrace();
         } catch (RemoteException e) {
@@ -92,6 +83,7 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter {
             e.printStackTrace();
         }
     }
+
     // Getting or posting data from/to cloud
     public ArrayList<String> performRequest(String urlString, String modo) throws IOException {
         Log.i("SyncAdapter", "Entering performRequest");
@@ -142,7 +134,7 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter {
                 return responses;
             }
             else if (modo.compareTo("POST") == 0){
-                JSONArray jsonArray = new JSONArray(students);
+                JSONArray jsonArray = new JSONArray("");
 
                 for (int i = 0; i< jsonArray.length(); i++){
                     JSONObject object = jsonArray.getJSONObject(i);
@@ -215,20 +207,18 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter {
             if (responses.size()>0){
 
                 String response = responses.get(0);
-                // Delete all and update with this data
 
                 JSONArray jsonArray = new JSONArray(response);
-                Uri uri = StudentsContract.Columns.CONTENT_URI;
-
-                Cursor c = mContentResolver.query(StudentsContract.Columns.CONTENT_URI, null, null, null, StudentsContract.Columns.DEFAULT_SORT_ORDER);
+                Uri uri = StudentsContract.STUDENTS_URI;
+                Cursor c = mContentResolver.query(StudentsContract.STUDENTS_URI, null, null, null, null);
                 ArrayList<String> students = new ArrayList<String>();
 
                 c.moveToFirst();
 
                 while (c.moveToNext()){
-                    String names = c.getString(c.getColumnIndexOrThrow(StudentsContract.Columns.NAMES));
-                    String firstLast = c.getString(c.getColumnIndexOrThrow(StudentsContract.Columns.FIRST_LASTNAME));
-                    String secondLast = c.getString(c.getColumnIndexOrThrow(StudentsContract.Columns.SECOND_LASTNAME));
+                    String names = c.getString(c.getColumnIndexOrThrow(StudentsContract.StudentsColumns.NAMES));
+                    String firstLast = c.getString(c.getColumnIndexOrThrow(StudentsContract.StudentsColumns.FIRST_LASTNAME));
+                    String secondLast = c.getString(c.getColumnIndexOrThrow(StudentsContract.StudentsColumns.SECOND_LASTNAME));
                     students.add(firstLast + " " + secondLast + " " + names);
                 }
 
@@ -241,15 +231,16 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter {
                     int idCloud = jso.getInt("id");
                     if (!students.contains(fln + " " + sln + " " + name)){
                         ContentValues values = new ContentValues();
-                        values.put(StudentsContract.Columns.NAMES, name);
-                        values.put(StudentsContract.Columns.FIRST_LASTNAME, fln);
-                        values.put(StudentsContract.Columns.SECOND_LASTNAME, sln);
-                        values.put(StudentsContract.Columns.ID_CLOUD, idCloud);
+                        values.put(StudentsContract.StudentsColumns.NAMES, name);
+                        values.put(StudentsContract.StudentsColumns.FIRST_LASTNAME, fln);
+                        values.put(StudentsContract.StudentsColumns.SECOND_LASTNAME, sln);
+                        values.put(StudentsContract.StudentsColumns.ID_CLOUD, idCloud);
 
                         mContentResolver.insert(uri , values);
                     }
 
                 }
+                c.close();
 
             }
         }

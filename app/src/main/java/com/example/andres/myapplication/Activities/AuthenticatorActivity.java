@@ -39,49 +39,73 @@ public class AuthenticatorActivity extends AccountAuthenticatorActivity {
     }
 
     public void submit() {
+
+        // Se obtiene el usuario y contrasena ingresados
         final String userName = ((TextView) findViewById(R.id.account_name)).getText().toString();
         final String userPass = ((TextView) findViewById(R.id.account_password)).getText().toString();
+
+        // Se loguea de forma asincronica para no entorpecer el UI thread
         new AsyncTask<Void, Void, Intent>() {
             @Override
             protected Intent doInBackground(Void... params) {
-                // Acá se debería pedir a la web
-                String authtoken = "1MQK9QG5as8nu6yw9ENKJAtt";
+
+                // Se loguea en el servidor y retorna token
+                String authtoken = logIn(userName, userPass);
+
+                // Informacion necesaria para enviar al authenticator
                 final Intent res = new Intent();
                 res.putExtra(AccountManager.KEY_ACCOUNT_NAME, userName);
                 res.putExtra(AccountManager.KEY_ACCOUNT_TYPE, "com.example.andres.myapplication");
                 res.putExtra(AccountManager.KEY_AUTHTOKEN, authtoken);
                 res.putExtra(PARAM_USER_PASS, userPass);
+
                 return res;
             }
             @Override
             protected void onPostExecute(Intent intent) {
+
                 finishLogin(intent);
             }
         }.execute();
     }
 
     private void finishLogin(Intent intent) {
+
         String accountName = intent.getStringExtra(AccountManager.KEY_ACCOUNT_NAME);
         String accountPassword = intent.getStringExtra(PARAM_USER_PASS);
         final Account account = new Account(accountName, intent.getStringExtra(AccountManager.KEY_ACCOUNT_TYPE));
+
+        // Si es que se esta anadiendo una nueva cuenta
         if (getIntent().getBooleanExtra(ARG_IS_ADDING_NEW_ACCOUNT, false)) {
+
             String authtoken = intent.getStringExtra(AccountManager.KEY_AUTHTOKEN);
             String authtokenType = "normal";
-            // Creating the account on the device and setting the auth token we got
-            // (Not setting the auth token will cause another call to the server to authenticate the user)
-
+            // Creando cuenta en el dispositivo y seteando el token que obtuvimos.
             mAccountManager.addAccountExplicitly(account, accountPassword, null);
 
+            // Ojo: hay que setear el token explicitamente si la cuenta no existe, no basta con mandarlo al authenticator
             mAccountManager.setAuthToken(account, authtokenType, authtoken);
         }
+
+        // Si no se está añadiendo cuenta, el token estaba antiguo invalidado.
+        // Seteamos contraseña nueva por si la cambio.
         else {
-            // Si no está añadiendo, solo está pidiendo la contraseña de nuevo, seteamos contraseña
+            // Solo seteamos contraseña
+            // Aca no es necesario setear el token explicitamente, basta con enviarlo al Authenticator
             mAccountManager.setPassword(account, accountPassword);
 
         }
+        // Setea el resultado para que lo reciba el Authenticator
         setAccountAuthenticatorResult(intent.getExtras());
         setResult(RESULT_OK, intent);
+
+        // Cerramos la actividad
         finish();
+    }
+
+    private String logIn(String user, String pass){
+        // Método para fines demostrativos :)
+        return "1MQK9QG5as8nu6yw9ENKJAtt";
     }
 
 }

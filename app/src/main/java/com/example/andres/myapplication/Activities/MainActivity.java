@@ -5,20 +5,14 @@ import android.accounts.AccountManager;
 import android.accounts.AccountManagerCallback;
 import android.accounts.AccountManagerFuture;
 import android.app.DialogFragment;
-import android.content.ComponentName;
 import android.content.ContentResolver;
 import android.content.Intent;
-import android.content.ServiceConnection;
 import android.database.ContentObserver;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
-import android.os.IBinder;
-import android.os.Message;
 import android.os.Messenger;
-import android.os.RemoteException;
 import android.support.v7.app.ActionBarActivity;
-import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 
@@ -29,13 +23,8 @@ import com.example.andres.myapplication.Model.Item;
 import com.example.andres.myapplication.Model.Student;
 import com.example.andres.myapplication.Provider.StudentsContract;
 import com.example.andres.myapplication.R;
-import com.example.andres.myapplication.Services.SyncService;
 
-import org.json.JSONArray;
 import org.json.JSONException;
-import org.json.JSONObject;
-
-import java.util.ArrayList;
 
 public class MainActivity extends ActionBarActivity implements ListFragment.OnFragmentInteractionListener, StudentFragment.OnFragmentInteractionListener,  AddStudentDialogFragment.NoticeDialogListener {
 
@@ -44,7 +33,7 @@ public class MainActivity extends ActionBarActivity implements ListFragment.OnFr
     boolean mBound = false;
     private Messenger mServiceMessenger = null;
 
-    private final Messenger mMessenger = new Messenger(new IncomingMessageHandler());
+    //private final Messenger mMessenger = new Messenger(new IncomingMessageHandler());
 
     public static final String ACCOUNT_TYPE = "com.example.andres.myapplication";
 
@@ -58,11 +47,14 @@ public class MainActivity extends ActionBarActivity implements ListFragment.OnFr
     public static String token = "";
 
 
-    private AccountManagerCallback<Bundle> myCallback = new AccountManagerCallback<Bundle>() {
+
+
+
+    private AccountManagerCallback<Bundle> mGetAuthTokenCallback = new AccountManagerCallback<Bundle>() {
         @Override
         public void run(final AccountManagerFuture<Bundle> arg0) {
             try {
-                token = (String) arg0.getResult().get(AccountManager.KEY_AUTHTOKEN); // this is your auth token
+                token = (String) arg0.getResult().get(AccountManager.KEY_AUTHTOKEN);
             } catch (Exception e) {
                 // handle error
             }
@@ -70,42 +62,36 @@ public class MainActivity extends ActionBarActivity implements ListFragment.OnFr
     };
 
 
-
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
+        ContentResolver mResolver = getContentResolver();
+
         accountManager = (AccountManager) getSystemService(
                 ACCOUNT_SERVICE);
-        ContentResolver mResolver = getContentResolver();
-        ;
+
         Account[] accounts = accountManager.getAccountsByType(ACCOUNT_TYPE);
         if (accounts.length == 0){
+            // También se puede llamar a metodo accountManager.addAcount(...)
             Intent intent = new Intent(this, AuthenticatorActivity.class);
             intent.putExtra(AuthenticatorActivity.ARG_IS_ADDING_NEW_ACCOUNT, true);
             startActivity(intent);
         }
         else{
             mAccount = accounts[0];
-            accountManager.getAuthToken(mAccount , "normal", null, this, myCallback, null);
-            Log.i("SyncAdapter", "Setting Sync");
+            accountManager.getAuthToken(mAccount, "normal", null, this, mGetAuthTokenCallback, null);
+
             mResolver.setIsSyncable(mAccount, StudentsContract.AUTHORITY, 1);
             mResolver.setSyncAutomatically(mAccount, StudentsContract.AUTHORITY , true);
-
-
         }
 
-        Uri mUri;
-
-        mUri = StudentsContract.Columns.CONTENT_URI;
 
         TableObserver observer = new TableObserver(null);
         /*
-         * Register the observer for the data table. The table's path
-         * and any of its subpaths trigger the observer.
+         * Registra el obsever para students
          */
-        mResolver.registerContentObserver(mUri, true, observer);
+        mResolver.registerContentObserver(StudentsContract.STUDENTS_URI, true, observer);
 
         setContentView(R.layout.activity_main);
 
@@ -116,10 +102,10 @@ public class MainActivity extends ActionBarActivity implements ListFragment.OnFr
     /**
      * Handles the incoming messages comming from the service
      */
-    private class IncomingMessageHandler extends Handler {
+    /*private class IncomingMessageHandler extends Handler {
         @Override
         public void handleMessage(Message msg) {
-            // Log.d(LOGTAG,"IncomingHandler:handleMessage");
+
             switch (msg.what) {
                 case SyncService.STUDENT_GETTED:
 
@@ -149,60 +135,42 @@ public class MainActivity extends ActionBarActivity implements ListFragment.OnFr
                     super.handleMessage(msg);
             }
         }
-    }
+    }*/
 
     public class TableObserver extends ContentObserver {
         /**
-         * Creates a content observer.
+         * Crea un content observer
          *
-         * @param handler The handler to run {@link #onChange} on, or null if none.
          */
         public TableObserver(Handler handler) {
             super(handler);
-            Log.i("Provider", "Iniciando observer");
-
         }
 
         /*
-                 * Define a method that's called when data in the
-                 * observed content provider changes.
-                 * This method signature is provided for compatibility with
-                 * older platforms.
-                 */
+         * Define el método que es llamado cuando los datos en el content provider cambian.
+         * Este método es solo para que haya compatibilidad con plataformas más viejas.
+        */
         @Override
         public void onChange(boolean selfChange) {
-            /*
-             * Invoke the method signature available as of
-             * Android platform version 4.1, with a null URI.
-             */
-            Log.i("Provider", "On change activated");
-
             onChange(selfChange, null);
         }
         /*
-         * Define a method that's called when data in the
-         * observed content provider changes.
+         * Define el método que es llamado cuando los datos en el content provider cambian.
          */
         @Override
         public void onChange(boolean selfChange, Uri changeUri) {
-            /*
-             * Ask the framework to run your sync adapter.
-             * To maintain backward compatibility, assume that
-             * changeUri is null.*/
-            if ( mAccount != null){
 
+            if (mAccount != null) {
+                // Corre la sincronizacion
                 ContentResolver.requestSync(mAccount, StudentsContract.AUTHORITY, null);
-
             }
-
-
         }
     }
 
 
 
 
-
+    /*
     @Override
     protected void onStart(){
         super.onStart();
@@ -225,7 +193,7 @@ public class MainActivity extends ActionBarActivity implements ListFragment.OnFr
      * Defines callbacks for service binding, passed to bindService()
     */
 
-    private ServiceConnection mConnection = new ServiceConnection() {
+    /*private ServiceConnection mConnection = new ServiceConnection() {
         @Override
         public void onServiceConnected(ComponentName name, IBinder service) {
 
@@ -251,7 +219,7 @@ public class MainActivity extends ActionBarActivity implements ListFragment.OnFr
 
         }
     };
-
+    */
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         // Inflate the menu; this adds items to the action bar if it is present.
@@ -297,7 +265,7 @@ public class MainActivity extends ActionBarActivity implements ListFragment.OnFr
      * @return Students in form of JSONArray
      * @throws JSONException
      */
-    private JSONArray fromStudentsToJson() throws JSONException {
+    /*private JSONArray fromStudentsToJson() throws JSONException {
         ListFragment listFrag = (ListFragment)
                 getSupportFragmentManager().findFragmentById(R.id.fragment_list);
 
@@ -365,12 +333,6 @@ public class MainActivity extends ActionBarActivity implements ListFragment.OnFr
 
     @Override
     public void onGetStudentsFromCloud() {
-        try {
-            syncWithCloud();
-        } catch (JSONException e) {
-            e.printStackTrace();
-        }
-
     }
 
     @Override
@@ -393,16 +355,6 @@ public class MainActivity extends ActionBarActivity implements ListFragment.OnFr
 
     }
 
-
-    public void onStudentsGetted(JSONArray jsonArray) {
-        ListFragment listFrag = (ListFragment) getSupportFragmentManager()
-                .findFragmentById(R.id.fragment_list);
-        try {
-            listFrag.mergeWithCloud(jsonArray);
-        } catch (JSONException e) {
-            e.printStackTrace();
-        }
-    }
 
 
 }

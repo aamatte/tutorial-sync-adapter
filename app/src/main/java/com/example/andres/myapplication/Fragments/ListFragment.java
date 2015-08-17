@@ -16,7 +16,8 @@ import android.widget.ListView;
 import com.example.andres.myapplication.Model.Item;
 import com.example.andres.myapplication.Model.Student;
 import com.example.andres.myapplication.MyAdapter;
-import com.example.andres.myapplication.Persistence.DatabaseManagement;
+import com.example.andres.myapplication.Persistence.DatabaseContract;
+import com.example.andres.myapplication.Persistence.StudentsDbHelper;
 import com.example.andres.myapplication.R;
 
 import org.json.JSONArray;
@@ -37,7 +38,6 @@ import java.util.Comparator;
 public class ListFragment extends Fragment {
 
     private OnFragmentInteractionListener mListener;
-    private final String linkDescargaArchivo = "https://drive.google.com/uc?export=download&id=0B8yZfi78R0lEd2NRb2dRZGtPM2M";
     private ArrayList<Item> indexedItemArray = new ArrayList<Item>();
     private ArrayList<String> nombres;
     private ArrayList<Student> students;
@@ -45,7 +45,7 @@ public class ListFragment extends Fragment {
     private ListView listView;
     ArrayList<Integer> idCloudFromPhone;
 
-    DatabaseManagement.Students.StudentsDbHelper mDbHelper;
+    StudentsDbHelper mDbHelper;
 
 
     @Override
@@ -126,47 +126,61 @@ public class ListFragment extends Fragment {
         generateIndexedItemArray();
     }
 
-    private void addStudentToDb(Student student){
-
-
+    private boolean addStudentToDb(Student student){
         if (mDbHelper == null) {
-            mDbHelper = DatabaseManagement.Students.StudentsDbHelper.getInstance(getActivity());
+            mDbHelper = StudentsDbHelper.getInstance(getActivity());
         }
-
 
         SQLiteDatabase db = mDbHelper.getWritableDatabase();
 
 
         ContentValues values = new ContentValues();
-        values.put(DatabaseManagement.Students.COLUMN_NAME_STUDENT_NAMES, student.getNames());
-        values.put(DatabaseManagement.Students.COLUMN_NAME_FIRST_LASTNAME, student.getFirstLastname());
-        values.put(DatabaseManagement.Students.COLUMN_NAME_SECOND_LASTNAME, student.getSecondLastname());
-        values.put(DatabaseManagement.Students.COLUMN_ID_CLOUD, student.getIdCloud());
+        values.put(DatabaseContract.Students.COLUMN_NAME_STUDENT_NAMES, student.getNames());
+        values.put(DatabaseContract.Students.COLUMN_NAME_FIRST_LASTNAME, student.getFirstLastname());
+        values.put(DatabaseContract.Students.COLUMN_NAME_SECOND_LASTNAME, student.getSecondLastname());
+        values.put(DatabaseContract.Students.COLUMN_ID_CLOUD, student.getIdCloud());
 
-        db.insertOrThrow(
-                DatabaseManagement.Students.TABLE_NAME,
-                null,
-                values);
+        long success = db.insert(
+                DatabaseContract.Students.TABLE_NAME,       // Nombre de la tabla
+                null,                                       // Columna que puede ser nula en caso de que values esté vacío
+                values);                                    // Valores
 
-
+        if (success > 0)
+            return true;
+        return false;
     }
 
     private boolean selectStudentsFromDb(){
-        students = new ArrayList<Student>();
 
         if (mDbHelper == null) {
-            mDbHelper = DatabaseManagement.Students.StudentsDbHelper.getInstance(getActivity());
+            mDbHelper = StudentsDbHelper.getInstance(getActivity());
         }
 
+        // Selecciono todas las columnas. Podría dejarse como null.
+        String[] projection = {DatabaseContract.Students.COLUMN_NAME_STUDENT_NAMES,
+                               DatabaseContract.Students.COLUMN_NAME_FIRST_LASTNAME,
+                               DatabaseContract.Students.COLUMN_NAME_SECOND_LASTNAME,
+                               DatabaseContract.Students.COLUMN_ID_CLOUD
+                               };
+
+        // Se deja como null porque no se requiere filtrar. Un ejemplo podria ser asi:
+        // String selection = DatabaseContract.Students.COLUMN_NAME_FIRST_LASTNAME + "= ?"
+        String selection = null;
+
+        // Podria ser:
+        // String[] selectionArgs = new String[]{ "Apellido" };
+        String[] selectionArgs = null;
+
+
         SQLiteDatabase db = mDbHelper.getReadableDatabase();
-        //mDbHelper.onUpgrade(db, 1, 2);
-        Cursor c = db.query(DatabaseManagement.Students.TABLE_NAME,
-                            null,
-                            null,
-                            null,
-                            null,
-                            null,
-                            DatabaseManagement.Students.COLUMN_NAME_FIRST_LASTNAME +" ASC", null);
+
+        Cursor c = db.query(DatabaseContract.Students.TABLE_NAME,   // Tabla
+                            projection,                             // Columnas a retornar
+                            selection,                              // Columnas de WHERE
+                            selectionArgs,                          // Valores de WHERE
+                            null,                                   // Group by
+                            null,                                   // Filtro por columnas de grupos
+                            DatabaseContract.Students.COLUMN_NAME_FIRST_LASTNAME +" ASC"); // Sort order
 
         ArrayList<Student> studentsInDb = new ArrayList<Student>();
 
@@ -177,10 +191,10 @@ public class ListFragment extends Fragment {
         }
 
         while (c.moveToNext()){
-            String names = c.getString(c.getColumnIndexOrThrow(DatabaseManagement.Students.COLUMN_NAME_STUDENT_NAMES)).toUpperCase();
-            String firstLast = c.getString(c.getColumnIndexOrThrow(DatabaseManagement.Students.COLUMN_NAME_FIRST_LASTNAME)).toUpperCase();
-            String secondLast = c.getString(c.getColumnIndexOrThrow(DatabaseManagement.Students.COLUMN_NAME_SECOND_LASTNAME)).toUpperCase();
-            int idCloud = c.getInt(c.getColumnIndexOrThrow(DatabaseManagement.Students.COLUMN_ID_CLOUD));
+            String names = c.getString(c.getColumnIndexOrThrow(DatabaseContract.Students.COLUMN_NAME_STUDENT_NAMES)).toUpperCase();
+            String firstLast = c.getString(c.getColumnIndexOrThrow(DatabaseContract.Students.COLUMN_NAME_FIRST_LASTNAME)).toUpperCase();
+            String secondLast = c.getString(c.getColumnIndexOrThrow(DatabaseContract.Students.COLUMN_NAME_SECOND_LASTNAME)).toUpperCase();
+            int idCloud = c.getInt(c.getColumnIndexOrThrow(DatabaseContract.Students.COLUMN_ID_CLOUD));
             studentsInDb.add(new Student(names, firstLast, secondLast, idCloud));
         }
 
@@ -318,38 +332,38 @@ public class ListFragment extends Fragment {
         if (!studentInDb(s)) return;
 
 
-        String where = DatabaseManagement.Students.COLUMN_ID_CLOUD + "=?";
+        String where = DatabaseContract.Students.COLUMN_ID_CLOUD + "=?";
         String[] whereArgs = new String[] {s.getIdCloud() +""};
-        Cursor c = dbr.query(DatabaseManagement.Students.TABLE_NAME,
+        Cursor c = dbr.query(DatabaseContract.Students.TABLE_NAME,
                 null,
                 where,
                 whereArgs,
                 null,
                 null,
-                DatabaseManagement.Students.COLUMN_NAME_FIRST_LASTNAME +" ASC", null);
+                DatabaseContract.Students.COLUMN_NAME_FIRST_LASTNAME +" ASC", null);
 
         c.moveToFirst();
 
 
 
-        String ns = c.getString(c.getColumnIndexOrThrow(DatabaseManagement.Students.COLUMN_NAME_STUDENT_NAMES));
-        String fln = c.getString(c.getColumnIndexOrThrow(DatabaseManagement.Students.COLUMN_NAME_FIRST_LASTNAME));
-        String sln = c.getString(c.getColumnIndexOrThrow(DatabaseManagement.Students.COLUMN_NAME_SECOND_LASTNAME));
+        String ns = c.getString(c.getColumnIndexOrThrow(DatabaseContract.Students.COLUMN_NAME_STUDENT_NAMES));
+        String fln = c.getString(c.getColumnIndexOrThrow(DatabaseContract.Students.COLUMN_NAME_FIRST_LASTNAME));
+        String sln = c.getString(c.getColumnIndexOrThrow(DatabaseContract.Students.COLUMN_NAME_SECOND_LASTNAME));
 
         ContentValues values = new ContentValues();
 
         if (!ns.equals(s.getNames())){
-            values.put(DatabaseManagement.Students.COLUMN_NAME_STUDENT_NAMES, s.getNames());
+            values.put(DatabaseContract.Students.COLUMN_NAME_STUDENT_NAMES, s.getNames());
         }
         if (!fln.equals(s.getFirstLastname())){
-            values.put(DatabaseManagement.Students.COLUMN_NAME_FIRST_LASTNAME, s.getFirstLastname());
+            values.put(DatabaseContract.Students.COLUMN_NAME_FIRST_LASTNAME, s.getFirstLastname());
         }
         if (!sln.equals(s.getSecondLastname())){
-            values.put(DatabaseManagement.Students.COLUMN_NAME_SECOND_LASTNAME, s.getSecondLastname());
+            values.put(DatabaseContract.Students.COLUMN_NAME_SECOND_LASTNAME, s.getSecondLastname());
         }
 
         if (values.size()!=0) {
-            dbw.update(DatabaseManagement.Students.TABLE_NAME, values, DatabaseManagement.Students.COLUMN_ID_CLOUD + " = ?",
+            dbw.update(DatabaseContract.Students.TABLE_NAME, values, DatabaseContract.Students.COLUMN_ID_CLOUD + " = ?",
                     new String[]{s.getIdCloud() + ""});
         }
 
@@ -378,11 +392,11 @@ public class ListFragment extends Fragment {
         SQLiteDatabase db = mDbHelper.getWritableDatabase();
 
         ContentValues values = new ContentValues();
-        values.put(DatabaseManagement.Students.COLUMN_ID_CLOUD, student.getIdCloud());
+        values.put(DatabaseContract.Students.COLUMN_ID_CLOUD, student.getIdCloud());
 
-        db.update(DatabaseManagement.Students.TABLE_NAME, values,  DatabaseManagement.Students.COLUMN_NAME_STUDENT_NAMES + " = ? AND "
-                        + DatabaseManagement.Students.COLUMN_NAME_FIRST_LASTNAME + " = ? AND " +
-                        DatabaseManagement.Students.COLUMN_NAME_SECOND_LASTNAME + " = ?",
+        db.update(DatabaseContract.Students.TABLE_NAME, values,  DatabaseContract.Students.COLUMN_NAME_STUDENT_NAMES + " = ? AND "
+                        + DatabaseContract.Students.COLUMN_NAME_FIRST_LASTNAME + " = ? AND " +
+                        DatabaseContract.Students.COLUMN_NAME_SECOND_LASTNAME + " = ?",
                         new String[]{student.getNames(), student.getFirstLastname(), student.getSecondLastname()});
 
         for (int i=0; i<students.size(); i++){

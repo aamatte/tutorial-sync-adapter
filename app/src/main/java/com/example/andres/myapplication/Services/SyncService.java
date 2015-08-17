@@ -1,48 +1,23 @@
 package com.example.andres.myapplication.Services;
 
 import android.app.Service;
-import android.content.Context;
 import android.content.Intent;
-import android.net.ConnectivityManager;
-import android.net.NetworkInfo;
-import android.os.AsyncTask;
-import android.os.Bundle;
-import android.os.Handler;
 import android.os.IBinder;
-import android.os.Message;
-import android.os.Messenger;
-import android.os.RemoteException;
 import android.util.Log;
-import android.widget.Toast;
 
 import com.example.andres.myapplication.SyncAdapter.SyncAdapter;
 
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
-
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.OutputStreamWriter;
-import java.net.HttpURLConnection;
-import java.net.URL;
-import java.net.UnknownHostException;
-import java.util.ArrayList;
-import java.util.concurrent.ExecutionException;
-
 public class SyncService extends Service {
 
-    public static final int STUDENT_GETTED = 1;
+    /*public static final int STUDENT_GETTED = 1;
     public static final int MSG_REGISTER_CLIENT = 2;
     public static final int SYNC_REQUESTED = 3;
     public static final int UPGRADE_STUDENT = 4;
 
     String jsonStringStudents;
-    Messenger client;
+    Messenger client;*/
     // Target we publish for clients to send messages to IncomingHandler.
-    private final Messenger mMessenger = new Messenger(new IncomingMessageHandler());
+    //private final Messenger mMessenger = new Messenger(new IncomingMessageHandler());
 
     private static final String TAG = "SyncService";
 
@@ -54,10 +29,10 @@ public class SyncService extends Service {
     @Override
     public void onCreate() {
         super.onCreate();
-        Log.i(TAG, "Service created");
+
         synchronized (sSyncAdapterLock) {
             if (sSyncAdapter == null) {
-                sSyncAdapter = new SyncAdapter(getApplicationContext(), true, "");
+                sSyncAdapter = new SyncAdapter(getApplicationContext(), true);
             }
         }
     }
@@ -86,20 +61,17 @@ public class SyncService extends Service {
 
 
 
-
-
-
     /**
      * Get JSON with students from cloud
      */
-    public void syncStudents() throws JSONException, ExecutionException, InterruptedException {
+    /*public void syncStudents() throws JSONException, ExecutionException, InterruptedException {
         (new RequestTask("GET", null)).execute("http://radiant-savannah-9544.herokuapp.com/students.json");
     }
 
     /**
      * Add student to the web app DB if not added
      */
-    public void addStudents(){
+    /*public void addStudents(){
         (new RequestTask("POST", jsonStringStudents)).execute("http://radiant-savannah-9544.herokuapp.com/students.json");
     }
 
@@ -107,7 +79,7 @@ public class SyncService extends Service {
         Processes data coming from the cloud, POST or GET, and upgrade the corresponding values calling
         corresponding methods.
      */
-    protected void processJsonResponse(ArrayList<String> responses, String modo) throws JSONException {
+    /*protected void processJsonResponse(ArrayList<String> responses, String modo) throws JSONException {
 
         if (modo.compareTo("POST")==0){
 
@@ -159,7 +131,7 @@ public class SyncService extends Service {
     /**
      * Handle incoming messages from clients (MainActivity)
      */
-    private class IncomingMessageHandler extends Handler {
+    /*private class IncomingMessageHandler extends Handler {
         @Override
         public void handleMessage(Message msg) {
             switch (msg.what) {
@@ -190,7 +162,7 @@ public class SyncService extends Service {
     /*
         Send all the students of the cloud to the clients using a message
      */
-    private void sendStudentsToUI(String students) {
+    /*private void sendStudentsToUI(String students) {
             try {
 
                 // Send data as a String
@@ -209,7 +181,7 @@ public class SyncService extends Service {
     /*
        Send message to the main activity with the information of the added student, speciffically, idCloud
      */
-    private void upgradeStudent(String names, String fln, String sln, int idCloud){
+    /*private void upgradeStudent(String names, String fln, String sln, int idCloud){
         try {
 
             // Send data as a String
@@ -236,7 +208,7 @@ public class SyncService extends Service {
         Performs request methods and returns the JSON data to be processed.
      */
 
-    private class RequestTask extends AsyncTask<String, Void, ArrayList<String>> {
+    /*private class RequestTask extends AsyncTask<String, Void, ArrayList<String>> {
         private String modo;
         String students;
         ArrayList<String> responses;
@@ -278,7 +250,7 @@ public class SyncService extends Service {
             With POST returns the added student to the cloud
          */
 
-        public ArrayList<String> performRequest(String urlString) throws IOException {
+      /*  public ArrayList<String> performRequest(String urlString) throws IOException {
 
             URL url;
             HttpURLConnection urlConnection = null;
@@ -377,5 +349,5 @@ public class SyncService extends Service {
 
 
 
-    }
+    }*/
 }

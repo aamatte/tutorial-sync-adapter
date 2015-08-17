@@ -17,10 +17,7 @@ public class AuthenticatorService extends Service {
         // Create a new authenticator object
         mAuthenticator = new AccountAuthenticator(this);
     }
-    /*
-     * When the system binds to this Service to make the RPC call
-     * return the authenticator's IBinder.
-     */
+
     @Override
     public IBinder onBind(Intent intent) {
         return mAuthenticator.getIBinder();
