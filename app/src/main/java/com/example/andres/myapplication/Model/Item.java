@@ -16,15 +16,9 @@ public class Item {
         return mTipoCelda;
     }
 
-    public void setmTipoCelda(int mTipoCelda) {
-        this.mTipoCelda = mTipoCelda;
-    }
 
     public String getmTexto() {
         return mTexto;
     }
 
-    public void setmTexto(String mTexto) {
-        this.mTexto = mTexto;
-    }
 }

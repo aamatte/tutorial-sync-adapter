@@ -11,7 +11,6 @@ import android.database.ContentObserver;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
-import android.os.Messenger;
 import android.support.v7.app.ActionBarActivity;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -24,31 +23,13 @@ import com.example.andres.myapplication.Model.Student;
 import com.example.andres.myapplication.Provider.StudentsContract;
 import com.example.andres.myapplication.R;
 
-import org.json.JSONException;
-
-public class MainActivity extends ActionBarActivity implements ListFragment.OnFragmentInteractionListener, StudentFragment.OnFragmentInteractionListener,  AddStudentDialogFragment.NoticeDialogListener {
+public class MainActivity extends ActionBarActivity implements ListFragment.OnFragmentInteractionListener,  AddStudentDialogFragment.NoticeDialogListener {
 
     public static final String CODE_NAME = "name";
-
-    boolean mBound = false;
-    private Messenger mServiceMessenger = null;
-
-    //private final Messenger mMessenger = new Messenger(new IncomingMessageHandler());
-
     public static final String ACCOUNT_TYPE = "com.example.andres.myapplication";
-
-    public static final String ACCOUNT = "default";
-
-
     AccountManager accountManager;
-
     Account mAccount;
-
     public static String token = "";
-
-
-
-
 
     private AccountManagerCallback<Bundle> mGetAuthTokenCallback = new AccountManagerCallback<Bundle>() {
         @Override
@@ -97,46 +78,6 @@ public class MainActivity extends ActionBarActivity implements ListFragment.OnFr
 
     }
 
-
-
-    /**
-     * Handles the incoming messages comming from the service
-     */
-    /*private class IncomingMessageHandler extends Handler {
-        @Override
-        public void handleMessage(Message msg) {
-
-            switch (msg.what) {
-                case SyncService.STUDENT_GETTED:
-
-                    String students = msg.getData().getString("students");
-
-                    try {
-                        onStudentsGetted(new JSONArray(students));
-                    } catch (JSONException e) {
-                        e.printStackTrace();
-                    }
-
-                    break;
-                case SyncService.UPGRADE_STUDENT:
-
-                    Bundle bundle = msg.getData();
-
-                    String names = bundle.getString("names");
-                    String fln = bundle.getString("firstlastname");
-                    String sln = bundle.getString("secondlastname");
-                    int idcloud = bundle.getInt("idcloud");
-
-                    upgradeStudent(new Student(names, fln, sln, idcloud));
-
-                    break;
-
-                default:
-                    super.handleMessage(msg);
-            }
-        }
-    }*/
-
     public class TableObserver extends ContentObserver {
         /**
          * Crea un content observer
@@ -168,58 +109,6 @@ public class MainActivity extends ActionBarActivity implements ListFragment.OnFr
     }
 
 
-
-
-    /*
-    @Override
-    protected void onStart(){
-        super.onStart();
-        // Bind to SyncService
-        Intent intent = new Intent (this, SyncService.class);
-        //bindService(intent, mConnection, Context.BIND_AUTO_CREATE);
-    }
-
-    @Override
-    protected void onStop() {
-        super.onStop();
-        // Unbind from the service
-        if (mBound) {
-            unbindService(mConnection);
-            mBound = false;
-        }
-    }
-
-    /**
-     * Defines callbacks for service binding, passed to bindService()
-    */
-
-    /*private ServiceConnection mConnection = new ServiceConnection() {
-        @Override
-        public void onServiceConnected(ComponentName name, IBinder service) {
-
-            // Service messenger initialized
-            mServiceMessenger = new Messenger(service);
-
-            try {
-                // Notify that client is connected, and send the messenger of the client to be stored in service
-                Message msg = Message.obtain(null, SyncService.MSG_REGISTER_CLIENT);
-                msg.replyTo = mMessenger;
-                mServiceMessenger.send(msg);
-
-            }
-            catch (RemoteException e) {
-                // In this case the service has crashed before we could even do anything with it
-            }
-            mBound = true;
-        }
-
-        @Override
-        public void onServiceDisconnected(ComponentName name) {
-            mBound = false;
-
-        }
-    };
-    */
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         // Inflate the menu; this adds items to the action bar if it is present.
@@ -247,65 +136,6 @@ public class MainActivity extends ActionBarActivity implements ListFragment.OnFr
         return super.onOptionsItemSelected(item);
     }
 
-    /**
-     * Call the upgradeStudentIdCloud list_fragment method
-     * @param student
-     */
-    private void upgradeStudent(Student student){
-
-        ListFragment listFrag = (ListFragment) getSupportFragmentManager()
-                .findFragmentById(R.id.fragment_list);
-
-        listFrag.upgradeStudentIdCloud(student);
-
-    }
-
-    /**
-     * Transform students to a JSONArray to be processed by the service
-     * @return Students in form of JSONArray
-     * @throws JSONException
-     */
-    /*private JSONArray fromStudentsToJson() throws JSONException {
-        ListFragment listFrag = (ListFragment)
-                getSupportFragmentManager().findFragmentById(R.id.fragment_list);
-
-        ArrayList<Student> students = listFrag.getStudents();
-
-        JSONArray jsonArray = new JSONArray();
-
-        for (int i=0; i<students.size(); i++){
-            if (students.get(i).getIdCloud() == 0){
-                Student s = students.get(i);
-
-                JSONObject jsonObject = new JSONObject();
-                jsonObject.put("name", s.getNames());
-                jsonObject.put("first_lastname", s.getFirstLastname());
-                jsonObject.put("second_lastname", s.getSecondLastname());
-                jsonArray.put(jsonObject);
-            }
-        }
-        return jsonArray;
-
-    }
-
-
-    private void syncWithCloud() throws JSONException {
-        if (mBound){
-
-            try {
-                Bundle bundle = new Bundle();
-                // Sends the JSONArray of students as String
-                bundle.putString("jsonstring", fromStudentsToJson().toString());
-                Message msg = Message.obtain(null, SyncService.SYNC_REQUESTED);
-                msg.setData(bundle);
-                mServiceMessenger.send(msg);
-            }
-            catch (RemoteException e) {
-                // In this case the service has crashed before we could even do anything with it
-            }
-        }
-
-    }
 
     /**
      * Opens a new activity with a student_fragments associated that displays the name of the student
@@ -320,7 +150,7 @@ public class MainActivity extends ActionBarActivity implements ListFragment.OnFr
                 .findFragmentById(R.id.student_fragment);
 
         if (studentFrag != null && studentFrag.isVisible()){
-                studentFrag.setNombre(item.getmTexto());
+                studentFrag.setName(item.getmTexto());
         }
         else{
             Intent intent = new Intent(this,StudentActivity.class );
@@ -335,10 +165,6 @@ public class MainActivity extends ActionBarActivity implements ListFragment.OnFr
     public void onGetStudentsFromCloud() {
     }
 
-    @Override
-    public void onFragmentInteractionStudent() {
-
-    }
 
     @Override
     public void onDialogPositiveClick(DialogFragment dialog, Student student) {

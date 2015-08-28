@@ -94,7 +94,6 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter {
         try {
             url = new URL(urlString);
 
-
             if (modo.compareTo("GET") == 0){
                 Log.i("SyncAdapter", "Entering GET");
                 urlConnection = (HttpURLConnection) url.openConnection();
@@ -105,22 +104,14 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter {
                 Log.i("SyncAdapter", "token setted "+token);
 
                 InputStream is;
-
                 int responseCode = urlConnection.getResponseCode();
                 Log.i("SyncAdapter", "Response code " + responseCode);
 
-
                 is = urlConnection.getInputStream();
-
                 InputStreamReader isr = new InputStreamReader(is);
-
-
                 BufferedReader reader = new BufferedReader(isr);
-
                 String response = "";
-
                 String line;
-
 
                 while ((line = reader.readLine()) != null) {
                     Log.i("SyncAdapter", line + "\n");
@@ -162,27 +153,17 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter {
 
                         responses.add(output);
                     }
-
-
-
                 }
                 return responses;
             }
-
         }
+        catch (UnknownHostException e) {}
+        catch (Exception ex) { }
 
-        catch (UnknownHostException e) {
-
-
-        } catch (Exception ex) {
-
-
-        } finally {
+        finally {
             if (urlConnection != null)  urlConnection.disconnect();
         }
-
         return responses;
-
     }
 
 
@@ -193,13 +174,10 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter {
     protected void updateData(ArrayList<String> responses, String modo) throws JSONException, RemoteException, OperationApplicationException {
 
         if (modo.compareTo("POST")==0){
-
             if (responses == null) return;
-
             for (int i=0; i<responses.size(); i++) {
 
             }
-
         }
 
         else{

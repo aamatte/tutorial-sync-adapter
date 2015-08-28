@@ -9,7 +9,7 @@ import com.example.andres.myapplication.R;
 import com.example.andres.myapplication.Fragments.StudentFragment;
 
 
-public class StudentActivity extends ActionBarActivity implements StudentFragment.OnFragmentInteractionListener {
+public class StudentActivity extends ActionBarActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -50,10 +50,5 @@ public class StudentActivity extends ActionBarActivity implements StudentFragmen
         }
 
         return super.onOptionsItemSelected(item);
-    }
-
-    @Override
-    public void onFragmentInteractionStudent() {
-
     }
 }

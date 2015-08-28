@@ -4,6 +4,7 @@ import android.app.Activity;
 import android.content.ContentValues;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
+import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
@@ -18,6 +19,7 @@ import com.example.andres.myapplication.Model.Student;
 import com.example.andres.myapplication.MyAdapter;
 import com.example.andres.myapplication.Persistence.DatabaseContract;
 import com.example.andres.myapplication.Persistence.StudentsDbHelper;
+import com.example.andres.myapplication.Provider.StudentsContract;
 import com.example.andres.myapplication.R;
 
 import org.json.JSONArray;
@@ -43,8 +45,6 @@ public class ListFragment extends Fragment {
     private ArrayList<Student> students;
     private MyAdapter adaptador;
     private ListView listView;
-    ArrayList<Integer> idCloudFromPhone;
-
     StudentsDbHelper mDbHelper;
 
 
@@ -54,7 +54,7 @@ public class ListFragment extends Fragment {
 
         View v = inflater.inflate(R.layout.fragment_list, container, false);
         adaptador = new MyAdapter(v.getContext() , R.layout.list_item , indexedItemArray);
-        students = new ArrayList<Student>();
+        students = new ArrayList<>();
         if (!selectStudentsFromDb()){
             mListener.onGetStudentsFromCloud();
         }
@@ -78,43 +78,6 @@ public class ListFragment extends Fragment {
 
     }
 
-
-
-    private ArrayList<Student> stringArrayToStudentArray(ArrayList<String>  stringArrayList, ArrayList<Student>  studentArrayList){
-        if (studentArrayList==null){
-            studentArrayList = new ArrayList<Student>();
-        }
-        for (int i=0; i<stringArrayList.size(); i++){
-            String[] name = stringArrayList.get(i).split(" ");
-            if (name.length == 4){
-                studentArrayList.add(new Student(name[2] + " " + name[3], name[0], name[1]));
-            }
-            else if (name.length==3){
-                studentArrayList.add(new Student(name[2], name[0], name[1]));
-            }
-            else if (name.length == 2){
-                studentArrayList.add(new Student(name[1], name[0]));
-            }
-        }
-        return studentArrayList;
-    }
-
-    private ArrayList<String> studentArrayToStringArray(ArrayList<Student> students,ArrayList<String>  strings ){
-        if (strings==null){
-            strings = new ArrayList<String>();
-        }
-        for (int i=0; i<students.size(); i++){
-            Student s = students.get(i);
-            strings.add(s.getFirstLastname() + " "+ s.getSecondLastname() +" "+ s.getNames());
-        }
-        return strings;
-    }
-
-
-    public ArrayList<Student> getStudents(){
-        return students;
-    }
-
     public void addStudent(Student student){
         if (!studentInDb(student)) return;
         addStudentToIndexedArray(student);
@@ -134,18 +97,19 @@ public class ListFragment extends Fragment {
         SQLiteDatabase db = mDbHelper.getWritableDatabase();
 
 
+
         ContentValues values = new ContentValues();
-        values.put(DatabaseContract.Students.COLUMN_NAME_STUDENT_NAMES, student.getNames());
-        values.put(DatabaseContract.Students.COLUMN_NAME_FIRST_LASTNAME, student.getFirstLastname());
-        values.put(DatabaseContract.Students.COLUMN_NAME_SECOND_LASTNAME, student.getSecondLastname());
-        values.put(DatabaseContract.Students.COLUMN_ID_CLOUD, student.getIdCloud());
+        values.put(StudentsContract.StudentsColumns.NAMES, student.getNames());
+        values.put(StudentsContract.StudentsColumns.FIRST_LASTNAME, student.getFirstLastname());
+        values.put(StudentsContract.StudentsColumns.SECOND_LASTNAME, student.getSecondLastname());
+        values.put(StudentsContract.StudentsColumns.ID_CLOUD, student.getIdCloud());
 
-        long success = db.insert(
-                DatabaseContract.Students.TABLE_NAME,       // Nombre de la tabla
-                null,                                       // Columna que puede ser nula en caso de que values esté vacío
-                values);                                    // Valores
+        Uri mNewUri = getActivity().getContentResolver().insert(
+                StudentsContract.STUDENTS_URI,   // the user dictionary content URI
+                values                          // the values to insert
+        );                                  // Valores
 
-        if (success > 0)
+        if (mNewUri != null)
             return true;
         return false;
     }
@@ -238,42 +202,6 @@ public class ListFragment extends Fragment {
 
     }
 
-    // Generate indexed Array and add the students to the database. Only use when there is no data in the database.
-    private void generateIndexedItemArray(String archivo){
-        if (archivo.length() ==0 || archivo == null) return;
-        nombres = new ArrayList<String>(Arrays.asList(archivo.split("\n")));
-        students = stringArrayToStudentArray(nombres, students);
-
-        ArrayList<Item> items = new ArrayList<Item>();
-
-        char last = students.get(0).getFirstLastname().charAt(0);
-        Item firstLetter = new Item(last + "", 0);
-        items.add(firstLetter);
-
-        for (int i=0; i<students.size(); i++){
-            Student s = students.get(i);
-
-            if (last != s.getFirstLastname().charAt(0)){
-
-                s.setNames(s.getNames().toUpperCase());
-                s.setFirstLastname(s.getFirstLastname().toUpperCase());
-                s.setSecondLastname(s.getSecondLastname().toUpperCase());
-
-                last = s.getFirstLastname().charAt(0);
-                Item item = new Item(last+"", 0);
-                items.add(item);
-            }
-
-            items.add(new Item(s.getNames() + " " + s.getFirstLastname() + " " + s.getSecondLastname(),1));
-            addStudentToDb(s);
-        }
-
-        indexedItemArray = items;
-        adaptador.addAll(items);
-        adaptador.notifyDataSetChanged();
-
-    }
-
     @Override
     public void onAttach(Activity activity) {
         super.onAttach(activity);
@@ -283,37 +211,6 @@ public class ListFragment extends Fragment {
             throw new ClassCastException(activity.toString()
                     + " must implement OnFragmentInteractionListener");
         }
-    }
-
-    public ArrayList<Student> fillPhoneDbWithCloudDb(JSONArray jsonArray) throws JSONException {
-        ArrayList<Student> arrayList = new ArrayList<Student>();
-        idCloudFromPhone = idCloudFromPhone();
-        SQLiteDatabase dbw = mDbHelper.getWritableDatabase();
-        SQLiteDatabase dbr = mDbHelper.getReadableDatabase();
-
-        for (int i=0; i<jsonArray.length(); i++){
-
-            JSONObject studentJSON = jsonArray.getJSONObject(i);
-
-            String name = studentJSON.getString("name");
-            String firstLastname = studentJSON.getString("first_lastname");
-            String secondLastname = studentJSON.getString("second_lastname");
-            int idCloud = studentJSON.getInt("id");
-            Student student = new Student(name, firstLastname, secondLastname, idCloud);
-            arrayList.add(student);
-
-            if (!idCloudFromPhone.contains(idCloud)){
-                student.setIdCloud(idCloud);
-                addStudent(student);
-                idCloudFromPhone.add(idCloud);
-            }
-            // CHECK IF VALUE OF THE STUDENT IS THE SAME IN CLOUD AND PHONE
-            else{
-                upgradeStudentNames(dbr, dbw, student);
-            }
-        }
-        selectStudentsFromDb();
-        return arrayList;
     }
 
     public boolean studentInDb(Student s){
@@ -327,93 +224,8 @@ public class ListFragment extends Fragment {
         return true;
     }
 
-    public void upgradeStudentNames(SQLiteDatabase dbr, SQLiteDatabase dbw, Student s){
 
-        if (!studentInDb(s)) return;
-
-
-        String where = DatabaseContract.Students.COLUMN_ID_CLOUD + "=?";
-        String[] whereArgs = new String[] {s.getIdCloud() +""};
-        Cursor c = dbr.query(DatabaseContract.Students.TABLE_NAME,
-                null,
-                where,
-                whereArgs,
-                null,
-                null,
-                DatabaseContract.Students.COLUMN_NAME_FIRST_LASTNAME +" ASC", null);
-
-        c.moveToFirst();
-
-
-
-        String ns = c.getString(c.getColumnIndexOrThrow(DatabaseContract.Students.COLUMN_NAME_STUDENT_NAMES));
-        String fln = c.getString(c.getColumnIndexOrThrow(DatabaseContract.Students.COLUMN_NAME_FIRST_LASTNAME));
-        String sln = c.getString(c.getColumnIndexOrThrow(DatabaseContract.Students.COLUMN_NAME_SECOND_LASTNAME));
-
-        ContentValues values = new ContentValues();
-
-        if (!ns.equals(s.getNames())){
-            values.put(DatabaseContract.Students.COLUMN_NAME_STUDENT_NAMES, s.getNames());
-        }
-        if (!fln.equals(s.getFirstLastname())){
-            values.put(DatabaseContract.Students.COLUMN_NAME_FIRST_LASTNAME, s.getFirstLastname());
-        }
-        if (!sln.equals(s.getSecondLastname())){
-            values.put(DatabaseContract.Students.COLUMN_NAME_SECOND_LASTNAME, s.getSecondLastname());
-        }
-
-        if (values.size()!=0) {
-            dbw.update(DatabaseContract.Students.TABLE_NAME, values, DatabaseContract.Students.COLUMN_ID_CLOUD + " = ?",
-                    new String[]{s.getIdCloud() + ""});
-        }
-
-
-    }
-
-
-    public ArrayList idCloudFromPhone() {
-        ArrayList list = new ArrayList();
-        for (int i=0; i<students.size(); i++) {
-            list.add(students.get(i).getIdCloud());
-        }
-        return list;
-     }
-
-
-    public void mergeWithCloud(JSONArray jsonArray) throws JSONException {
-        ArrayList<Student> studentsInCloud = fillPhoneDbWithCloudDb(jsonArray);
-
-    }
-
-
-
-    public void upgradeStudentIdCloud(Student student) {
-
-        SQLiteDatabase db = mDbHelper.getWritableDatabase();
-
-        ContentValues values = new ContentValues();
-        values.put(DatabaseContract.Students.COLUMN_ID_CLOUD, student.getIdCloud());
-
-        db.update(DatabaseContract.Students.TABLE_NAME, values,  DatabaseContract.Students.COLUMN_NAME_STUDENT_NAMES + " = ? AND "
-                        + DatabaseContract.Students.COLUMN_NAME_FIRST_LASTNAME + " = ? AND " +
-                        DatabaseContract.Students.COLUMN_NAME_SECOND_LASTNAME + " = ?",
-                        new String[]{student.getNames(), student.getFirstLastname(), student.getSecondLastname()});
-
-        for (int i=0; i<students.size(); i++){
-            Student student1 = students.get(i);
-            if (student.getNames().equals(student1.getNames()) &&
-                student.getFirstLastname().equals(student1.getFirstLastname()) &&
-                student.getSecondLastname().equals(student1.getSecondLastname()))
-            {
-                student1.setIdCloud(student.getIdCloud());
-            }
-        }
-    }
-
-
-
-
-        @Override
+    @Override
     public void onDetach() {
         super.onDetach();
         mListener = null;
@@ -421,8 +233,8 @@ public class ListFragment extends Fragment {
 
 
     public interface OnFragmentInteractionListener {
-        public void onFragmentInteractionList(Item item);
-        public void onGetStudentsFromCloud();
+        void onFragmentInteractionList(Item item);
+        void onGetStudentsFromCloud();
     }
 
 
@@ -432,65 +244,4 @@ public class ListFragment extends Fragment {
             return o1.getFirstLastname().compareTo(o2.getFirstLastname());
         }
     }
-
-    private class DownloadFileTask extends AsyncTask<String, Void, String>{
-
-        @Override
-        protected String doInBackground(String... params) {
-            String archivo = performRequest(params[0]);
-            return archivo;
-        }
-
-        @Override
-        protected void onPostExecute(String result) {
-            super.onPostExecute(result);
-            generateIndexedItemArray(result);
-        }
-
-        public String performRequest(String urlString) {
-
-            URL url;
-            HttpURLConnection urlConnection = null;
-
-            try {
-                url = new URL(urlString);
-                urlConnection = (HttpURLConnection) url.openConnection();
-                urlConnection.setRequestMethod("GET");
-
-                int responseCode = urlConnection.getResponseCode();
-
-                InputStream is = urlConnection.getInputStream();
-
-                InputStreamReader isr = new InputStreamReader(is);
-
-                BufferedReader reader = new BufferedReader(isr);
-
-                String response = "";
-
-                String line;
-
-                while ((line = reader.readLine()) != null) {
-                    response += line + "\n";
-                }
-
-                reader.close();
-                urlConnection.disconnect();
-                return response;
-
-
-
-            } catch (Exception e) {
-                e.printStackTrace();
-
-            } finally {
-                if (urlConnection != null)  urlConnection.disconnect();
-            }
-
-            return null;
-
-        }
-
-
-    }
-
 }
