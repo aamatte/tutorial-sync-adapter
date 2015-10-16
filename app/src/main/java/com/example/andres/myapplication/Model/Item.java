@@ -1,24 +1,22 @@
 package com.example.andres.myapplication.Model;
 
-/**
- * Created by andres on 19-03-15.
- */
 public class Item {
-    private String mTexto;
-    private int mTipoCelda;
+    public final static int STUDENT_CELL = 1;
+    public final static int LETTER_CELL = 0;
 
-    public Item(String mTexto, int mTipoCelda) {
-        this.mTexto = mTexto;
-        this.mTipoCelda = mTipoCelda;
+    private String mText;
+    private int mCellType;
+
+    public Item(String text, int cellType) {
+        mText = text;
+        mCellType = cellType;
     }
 
-    public int getmTipoCelda() {
-        return mTipoCelda;
+    public int getCellType() {
+        return mCellType;
     }
 
-
-    public String getmTexto() {
-        return mTexto;
+    public String getText() {
+        return mText;
     }
-
 }

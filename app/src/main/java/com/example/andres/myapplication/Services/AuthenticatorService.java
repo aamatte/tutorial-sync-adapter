@@ -7,11 +7,13 @@ import android.os.IBinder;
 import com.example.andres.myapplication.Authenticator.AccountAuthenticator;
 
 /**
- * Created by andres on 18-04-15.
+ * Este servicio permite a otros procesos enlazarse (bind) a el y permite que se puedan comunicar
+ * con {@link AccountAuthenticator}. Lo único que se debe hacer es llamar al método
+ * {@link AccountAuthenticator#getIBinder()}.
  */
 public class AuthenticatorService extends Service {
-
     private AccountAuthenticator mAuthenticator;
+
     @Override
     public void onCreate() {
         // Create a new authenticator object

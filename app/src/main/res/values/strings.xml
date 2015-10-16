@@ -8,8 +8,9 @@
     <string name="hello_blank_fragment">Hello blank fragment</string>
     <string name="title_activity_main_activity2">MainActivity2Activity</string>
     <string name="title_activity_student">StudentActivity</string>
-    <string name="dialog_agregar_alumno_title">Agregar alumno</string>
-    <string name="dialog_agregar_alumno_positive">Confirmar</string>
-    <string name="dialog_agregar_alumno_negative">Cancelar</string>
+    <string name="dialog_add_student_title">Agregar alumno</string>
+    <string name="dialog_add_student_positive">Confirmar</string>
+    <string name="dialog_add_student_negative">Cancelar</string>
+    <string name="select_a_student">Selecciona un estudiante</string>
 
 </resources>

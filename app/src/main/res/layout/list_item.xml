@@ -10,6 +10,6 @@
         android:layout_height="fill_parent"
         android:textAppearance="?android:attr/textAppearanceLarge"
         android:text="Medium Text"
-        android:id="@+id/texto" />
+        android:id="@+id/text_view" />
 
 </RelativeLayout>

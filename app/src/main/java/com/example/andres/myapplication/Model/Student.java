@@ -1,54 +1,62 @@
 package com.example.andres.myapplication.Model;
 
-/**
- * Created by andres on 11-04-15.
- */
-public class Student {
+import java.util.Comparator;
 
-    private String names;
-    private String firstLastname;
-    private String secondLastname;
-    private int idCloud;
+public class Student implements Comparator<Student>{
 
-    public Student(String names, String firstLastname, String secondLastname){
-        this.names = names;
-        this.firstLastname = firstLastname;
-        this.secondLastname = secondLastname;
+    public static final String NAME = "name";
+    public static final String FIRST_LASTNAME = "first_lastname";
+    public static final String SECOND_LASTNAME = "second_lastname";
+    public static final String ID = "id";
+
+    private String mNames;
+    private String mFirstLastname;
+    private String mSecondLastname;
+    private int mIdCloud;
+
+    public Student() { }
+
+    public Student(String names, String firstLastname, String secondLastname) {
+        mNames = names;
+        mFirstLastname = firstLastname;
+        mSecondLastname = secondLastname;
     }
 
-    public Student(String names, String firstLastname, String secondLastname, int idCloud){
-        this.names = names;
-        this.firstLastname = firstLastname;
-        this.secondLastname = secondLastname;
-        this.idCloud = idCloud;
+    public Student(String names, String firstLastname, String secondLastname, int idCloud) {
+        mNames = names;
+        mFirstLastname = firstLastname;
+        mSecondLastname = secondLastname;
+        mIdCloud = idCloud;
     }
-
 
     public String getNames() {
-        return names;
+        return mNames;
     }
 
     public String getFirstLastname() {
-        return firstLastname;
+        return mFirstLastname;
     }
 
     public String getSecondLastname() {
-        return secondLastname;
+        return mSecondLastname;
     }
 
     public int getIdCloud() {
-        return idCloud;
+        return mIdCloud;
     }
 
     @Override
-    public boolean equals(Object o){
-        Student s = (Student)o;
-        if (s.getFirstLastname().equals(firstLastname) &&
-            s.getSecondLastname().equals(secondLastname) &&
-            s.getNames().equals(names))
+    public int compare(Student lhs, Student rhs) {
+        return lhs.getFirstLastname().compareTo(rhs.getFirstLastname());
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        Student student = (Student)o;
+        if (student.getFirstLastname().equals(mFirstLastname) &&
+            student.getSecondLastname().equals(mSecondLastname) &&
+            student.getNames().equals(mNames))
             return true;
         return false;
     }
-
-
 }

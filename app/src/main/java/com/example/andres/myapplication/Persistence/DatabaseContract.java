@@ -3,12 +3,12 @@ package com.example.andres.myapplication.Persistence;
 import android.provider.BaseColumns;
 
 /**
- * Created by andres on 02-04-15.
+ * Contiene las constantes relacionadas con la base de datos. Nombres de tablas, nombres de columnas
+ * , operaciones estandar como crear o eliminar tablas, etc.
  */
 public final class DatabaseContract {
 
-    public DatabaseContract() {
-    }
+    public DatabaseContract() { }
 
     public static abstract class Students implements BaseColumns {
 
@@ -21,7 +21,6 @@ public final class DatabaseContract {
         public static final String TEXT_TYPE = " TEXT";
         public static final String INTEGER_TYPE = " INTEGER";
         public static final String COMMA_SEP = ",";
-
 
         public static final String SQL_CREATE_STUDENTS_TABLE =
                 "CREATE TABLE " + Students.TABLE_NAME + " (" +

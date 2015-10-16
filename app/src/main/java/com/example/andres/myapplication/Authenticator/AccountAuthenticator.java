@@ -12,11 +12,13 @@ import android.text.TextUtils;
 
 import com.example.andres.myapplication.Activities.AuthenticatorActivity;
 
-/*
-    Clase que maneja la autenticación y realiza la gran mayoría de las operaciones importantes de una cuenta.
+/**
+  * Clase que maneja la autenticación y realiza la gran mayoría de las operaciones importantes
+  * de una cuenta.
  */
 public class AccountAuthenticator extends AbstractAccountAuthenticator {
-
+    public static final String ACCOUNT_TYPE = "com.example.andres.myapplication";
+    public static final String AUTHTOKEN_TYPE = "normal";
     private Context mContext;
 
     public AccountAuthenticator(Context context) {
@@ -29,37 +31,45 @@ public class AccountAuthenticator extends AbstractAccountAuthenticator {
         return null;
     }
 
-    /*
-      Llamado cuando el usuario quiere loguearse y añadir un nuevo usuario.
-      @return bundle con intent para iniciar AuthenticatorActivity.
+    /**
+     * Llamado cuando el usuario quiere loguearse y añadir un nuevo usuario.
+     * @param response
+     * @param accountType
+     * @param authTokenType
+     * @param requiredFeatures
+     * @param options
+     * @return bundle con intent para iniciar AuthenticatorActivity.
+     * @throws NetworkErrorException
      */
     @Override
-    public Bundle addAccount(AccountAuthenticatorResponse response, String accountType, String authTokenType, String[] requiredFeatures, Bundle options) throws NetworkErrorException {
+    public Bundle addAccount(AccountAuthenticatorResponse response, String accountType,
+                             String authTokenType, String[] requiredFeatures, Bundle options)
+            throws NetworkErrorException {
 
         final Intent intent = new Intent(mContext, AuthenticatorActivity.class);
         intent.putExtra(AuthenticatorActivity.ARG_ACCOUNT_TYPE, accountType);
         intent.putExtra(AuthenticatorActivity.ARG_AUTH_TYPE, authTokenType);
         intent.putExtra(AuthenticatorActivity.ARG_IS_ADDING_NEW_ACCOUNT, true);
         intent.putExtra(AccountManager.KEY_ACCOUNT_AUTHENTICATOR_RESPONSE, response);
-
         final Bundle bundle = new Bundle();
         bundle.putParcelable(AccountManager.KEY_INTENT, intent);
-
         return bundle;
     }
 
     @Override
-    public Bundle confirmCredentials(AccountAuthenticatorResponse response, Account account, Bundle options) throws NetworkErrorException {
+    public Bundle confirmCredentials(AccountAuthenticatorResponse response, Account account,
+                                     Bundle options) throws NetworkErrorException {
         return null;
     }
 
-    /*
-        Obtiene el token de una cuenta. Si falla, se avisa que se debe llamar a AuthenticatorActivity.
-        @return Si resulta, bundle con informacion de cuenta y token.
-                Si falla, bundle con informacion de cuenta y activity.
+    /**
+     * Obtiene el token de una cuenta. Si falla, se avisa que se debe llamar a AuthenticatorActivity.
+     * @return Si resulta, bundle con informacion de cuenta y token.   Si falla, bundle con
+     * informacion de cuenta y activity.
      */
     @Override
-    public Bundle getAuthToken(AccountAuthenticatorResponse response, Account account, String authTokenType, Bundle options) throws NetworkErrorException {
+    public Bundle getAuthToken(AccountAuthenticatorResponse response, Account account,
+                               String authTokenType, Bundle options) throws NetworkErrorException {
 
         // Extrae username y pass del account manager
         final AccountManager am = AccountManager.get(mContext);
@@ -95,7 +105,6 @@ public class AccountAuthenticator extends AbstractAccountAuthenticator {
         final Bundle bundle = new Bundle();
         bundle.putParcelable(AccountManager.KEY_INTENT, intent);
         return bundle;
-
     }
 
     @Override
@@ -104,19 +113,20 @@ public class AccountAuthenticator extends AbstractAccountAuthenticator {
     }
 
     @Override
-    public Bundle updateCredentials(AccountAuthenticatorResponse response, Account account, String authTokenType, Bundle options) throws NetworkErrorException {
+    public Bundle updateCredentials(AccountAuthenticatorResponse response, Account account,
+                                    String authTokenType, Bundle options)
+            throws NetworkErrorException {
         return null;
     }
 
     @Override
-    public Bundle hasFeatures(AccountAuthenticatorResponse response, Account account, String[] features) throws NetworkErrorException {
+    public Bundle hasFeatures(AccountAuthenticatorResponse response, Account account,
+                              String[] features) throws NetworkErrorException {
         return null;
     }
 
     private String authenticateInServer(Account account){
         // Método para fines de demostración :)
-        return "1MQK9QG5as8nu6yw9ENKJAtt";
+        return "tokentokentokentokentoken";
     }
-
-
 }

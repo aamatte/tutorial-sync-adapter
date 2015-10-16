@@ -13,47 +13,50 @@ import android.widget.EditText;
 import com.example.andres.myapplication.Model.Student;
 import com.example.andres.myapplication.R;
 
-
+/**
+ * Dialogo usado para el ingreso de los datos de un nuevo estudiante.
+ * Se puede agregar un estudiante con nombre, apellido paterno y apellido materno.
+ */
 public class AddStudentDialogFragment extends DialogFragment {
 
-    public EditText editText;
-    View v;
     private NoticeDialogListener mListener;
 
     public interface NoticeDialogListener {
-        public void onDialogPositiveClick(DialogFragment dialog, Student student);
-        public void onDialogNegativeClick(DialogFragment dialog);
+        void onDialogPositiveClick(DialogFragment dialog, Student student);
+        void onDialogNegativeClick(DialogFragment dialog);
     }
-
 
     @Override
     public Dialog onCreateDialog(Bundle savedInstanceState) {
         // Use the Builder class for convenient dialog construction
         LayoutInflater inflater = getActivity().getLayoutInflater();
-
-        v = inflater.inflate(R.layout.dialog_agregar_alumno, null);
+        final View v = inflater.inflate(R.layout.dialog_agregar_alumno, null);
 
         AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
         builder.setView(v);
-        builder.setTitle(R.string.dialog_agregar_alumno_title);
-        builder.setPositiveButton(R.string.dialog_agregar_alumno_positive, new DialogInterface.OnClickListener() {
+        builder.setTitle(R.string.dialog_add_student_title);
+
+        builder.setPositiveButton(R.string.dialog_add_student_positive, new DialogInterface.OnClickListener() {
             public void onClick(DialogInterface dialog, int id) {
-                String name = ((EditText) v.findViewById(R.id.dialog_student_name)).getText().toString().toUpperCase();
-                String firstLastname = ((EditText) v.findViewById(R.id.dialog_first_lastname)).getText().toString().toUpperCase();
-                String secondLastname = ((EditText) v.findViewById(R.id.dialog_second_lastname)).getText().toString().toUpperCase();
+                String name = ((EditText) v.findViewById(R.id.dialog_student_name))
+                        .getText().toString().toUpperCase();
+                String firstLastname = ((EditText) v.findViewById(R.id.dialog_first_lastname))
+                        .getText().toString().toUpperCase();
+                String secondLastname = ((EditText) v.findViewById(R.id.dialog_second_lastname))
+                        .getText().toString().toUpperCase();
                 Student student = new Student(name, firstLastname, secondLastname);
                 mListener.onDialogPositiveClick(AddStudentDialogFragment.this , student);
             }
-        })
-                .setNegativeButton(R.string.dialog_agregar_alumno_negative, new DialogInterface.OnClickListener() {
+        });
+
+        builder.setNegativeButton(R.string.dialog_add_student_negative, new DialogInterface.OnClickListener() {
                     public void onClick(DialogInterface dialog, int id) {
-                        // NADA
+                        // No pasa nada
                     }
                 });
         // Create the AlertDialog object and return it
         return builder.create();
     }
-
 
     @Override
     public void onAttach(Activity activity) {

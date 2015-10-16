@@ -4,9 +4,12 @@ import android.content.Context;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 
-
+/**
+ * Clase que nos permite interactuar con la base de datos.
+ * Documentacion oficial
+ * http://developer.android.com/reference/android/database/sqlite/SQLiteOpenHelper.html
+ */
 public class StudentsDbHelper extends SQLiteOpenHelper {
-
     public static final int DATABASE_VERSION = 2;
     public static final String DATABASE_NAME = "Students.db";
 
@@ -16,8 +19,12 @@ public class StudentsDbHelper extends SQLiteOpenHelper {
         super(context, DATABASE_NAME, null, DATABASE_VERSION);
     }
 
+    /**
+     * Nos aseguramos de que solo haya una instancia para evitar errores.
+     * Mas detalles:
+     * http://www.androiddesignpatterns.com/2012/05/correctly-managing-your-sqlite-database.html
+     */
     public static synchronized StudentsDbHelper getInstance(Context context) {
-
         if (sInstance == null) {
             sInstance = new StudentsDbHelper(context.getApplicationContext());
         }
@@ -34,7 +41,4 @@ public class StudentsDbHelper extends SQLiteOpenHelper {
         db.execSQL(DatabaseContract.Students.SQL_DELETE_STUDENTS);
         onCreate(db);
     }
-
-
-
 }

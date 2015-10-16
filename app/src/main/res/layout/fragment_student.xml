@@ -11,7 +11,7 @@
         android:layout_height="wrap_content"
         android:textAppearance="?android:attr/textAppearanceLarge"
         android:text="Medium Text"
-        android:id="@+id/texto"
+        android:id="@+id/text_view"
         android:layout_centerVertical="true"
         android:layout_centerHorizontal="true"
         android:gravity="center"/>

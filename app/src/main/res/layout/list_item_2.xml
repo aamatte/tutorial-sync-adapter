@@ -11,6 +11,6 @@
         android:textStyle="bold"
         android:textAppearance="?android:attr/textAppearanceSmall"
         android:text="Medium Text"
-        android:id="@+id/texto"
+        android:id="@+id/text_view"
         android:layout_gravity="center_horizontal" />
 </RelativeLayout>

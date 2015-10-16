@@ -4,7 +4,7 @@
     android:id="@+id/layout"
     tools:context=".MainActivity"
     >
-    <fragment class="com.example.andres.myapplication.Fragments.ListFragment"
+    <fragment class="com.example.andres.myapplication.Fragments.StudentsListFragment"
         android:id="@+id/fragment_list"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
