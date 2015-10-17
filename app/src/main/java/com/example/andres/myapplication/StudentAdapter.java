@@ -55,7 +55,7 @@ public class StudentAdapter extends ArrayAdapter<Item>
      */
     @Override
     public int getItemViewType(int position) {
-        Item contenido = getItem(position);
-        return contenido.getCellType();
+        Item item = getItem(position);
+        return item.getCellType();
     }
 }
