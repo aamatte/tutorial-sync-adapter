@@ -54,12 +54,12 @@ Qué se necesita
 Para que nuestro SyncAdapter esté funcionando necesitamos cubrir e
 implementar los siguientes componentes o funcionalidades:
 
-1.  [[Base de datos|Base de datos]]
+1.  [Base de datos] (https://github.com/aamatte/EjemploSyncAdapter/wiki/Base-de-datos)
 
-2.  [[Content Provider|Content provider]]
+2.  [Content provider] (https://github.com/aamatte/EjemploSyncAdapter/wiki/Base-de-datos)
 
-3.  [[Authenticator|Authenticator]]
+3.  [Authenticator](https://github.com/aamatte/EjemploSyncAdapter/wiki/Base-de-datos)
 
-4.  [[Clase SyncAdapter|SyncAdapter]]
+4.  [Clase SyncAdapter](https://github.com/aamatte/EjemploSyncAdapter/wiki/Base-de-datos)
 
-5.  [[Correr el SyncAdapter|Correr el SyncAdapter]]
+5.  [Correr el SyncAdapter]((https://github.com/aamatte/EjemploSyncAdapter/wiki/Base-de-datos)
