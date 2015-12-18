@@ -56,10 +56,10 @@ implementar los siguientes componentes o funcionalidades:
 
 1.  [Base de datos] (https://github.com/aamatte/EjemploSyncAdapter/wiki/Base-de-datos)
 
-2.  [Content provider] (https://github.com/aamatte/EjemploSyncAdapter/wiki/Base-de-datos)
+2.  [Content provider] (https://github.com/aamatte/EjemploSyncAdapter/wiki/Content-provider)
 
-3.  [Authenticator](https://github.com/aamatte/EjemploSyncAdapter/wiki/Base-de-datos)
+3.  [Authenticator](https://github.com/aamatte/EjemploSyncAdapter/wiki/Authenticator)
 
-4.  [Clase SyncAdapter](https://github.com/aamatte/EjemploSyncAdapter/wiki/Base-de-datos)
+4.  [Clase SyncAdapter](https://github.com/aamatte/EjemploSyncAdapter/wiki/SyncAdapter)
 
-5.  [Correr el SyncAdapter](https://github.com/aamatte/EjemploSyncAdapter/wiki/Base-de-datos)
+5.  [Correr el SyncAdapter](https://github.com/aamatte/EjemploSyncAdapter/wiki/Correr-el-SyncAdapter)
