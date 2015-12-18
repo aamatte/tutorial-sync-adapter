@@ -62,4 +62,4 @@ implementar los siguientes componentes o funcionalidades:
 
 4.  [Clase SyncAdapter](https://github.com/aamatte/EjemploSyncAdapter/wiki/Base-de-datos)
 
-5.  [Correr el SyncAdapter]((https://github.com/aamatte/EjemploSyncAdapter/wiki/Base-de-datos)
+5.  [Correr el SyncAdapter](https://github.com/aamatte/EjemploSyncAdapter/wiki/Base-de-datos)
