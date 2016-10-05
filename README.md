@@ -1,4 +1,7 @@
 # Tutorial SyncAdapter
+
+También se puede ver este tutorial en PDF: [Tutorial PDF](https://github.com/aamatte/Tutorial-Sync-Adapter/raw/master/tutorial.pdf).
+
 La consultora Gartner estima que para 2016 el 40% de las aplicaciones
 móviles usará servicios de la nube. Esto claramente obliga a los
 desarrolladores a aprender y a utilizar las herramientas que nos
